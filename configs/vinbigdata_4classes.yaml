@@ -1,0 +1,10 @@
+path: /kaggle/working/vinbigdata_yolo
+train: images/train
+val: images/val
+test: images/test
+nc: 4
+names:
+- Cardiomegaly
+- Aortic_enlargement
+- Pleural_pathology
+- Parenchymal_opacity

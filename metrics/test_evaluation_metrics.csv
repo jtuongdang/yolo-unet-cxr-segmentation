@@ -1,0 +1,6 @@
+Class ID,Macro-Class Name,Precision,Recall,F1-Score,mAP@50,mAP@50-95
+0,Cardiomegaly,0.8053,0.9218,0.8596,0.9199,0.6401
+1,Aortic_enlargement,0.7047,0.8885,0.786,0.8708,0.5187
+2,Pleural_pathology,0.4698,0.3388,0.3937,0.3807,0.1355
+3,Parenchymal_opacity,0.4841,0.3721,0.4208,0.3762,0.1317
+ALL,OVERALL (MEAN),0.616,0.6303,0.6231,0.6369,0.3565
