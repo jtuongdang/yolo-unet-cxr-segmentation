@@ -12,6 +12,26 @@
 
 ---
 
+## Mục Lục (Table of Contents)
+- [1. Giới Thiệu & Động Lực Lâm Sàng (Executive Summary)](#1-giới-thiệu--động-lực-lâm-sàng-executive-summary--clinical-rationale)
+- [2. Kiến Trúc Hệ Thống Đa Tầng (System Architecture)](#2-kiến-trúc-hệ-thống-đa-tầng-system-architecture)
+- [3. Kỹ Nghệ Dữ Liệu & Đóng Góp Kỹ Thuật (Key Innovations)](#3-các-đóng-góp-kỹ-thuật-nổi-bật-key-technical-innovations)
+  - [3.1. Hợp nhất nhãn chuyên gia bằng WBF](#31-hợp-nhất-nhãn-chuyên-gia-bằng-weighted-boxes-fusion-wbf)
+  - [3.2. Quản trị bộ nhớ bằng Symlink (0 MB Disk Overhead)](#32-quản-trị-bộ-nhớ-bằng-liên-kết-tượng-trưng-symlink---0-mb-disk-overhead)
+  - [3.3. Cơ chế nạp ảnh âm tính (Background Injection 10%)](#33-cơ-chế-nạp-ảnh-âm-tính-background-injection-10)
+  - [3.4. Hàm mất mát hỗn hợp Focal Tversky Hybrid Loss](#34-hàm-mất-mát-hỗn-hợp-chuyên-trị-vi-mô-focal-tversky-hybrid-loss)
+  - [3.5. Bản đồ phân loại lỗi lâm sàng 4 cột (Clinical Error Map)](#35-bản-đồ-phân-loại-lỗi-lâm-sàng-4-cột-clinical-error-mapping)
+- [4. Kết Quả Thực Nghiệm & Biểu Đồ Đánh Giá (Benchmarks & Visualizations)](#4-kết-quả-thực-nghiệm--bảng-đánh-giá-độc-lập-benchmarks)
+  - [4.1. Phân hệ phân đoạn màng phổi (U-Net++)](#41-phân-hệ-phân-đoạn-màng-phổi-u-net-trên-tập-test-siim-acr)
+  - [4.2. Phân hệ định vị đa vùng (YOLOv11m)](#42-phân-hệ-định-vị-đa-vùng-yolov11m-trên-tập-test-vinbigdata)
+  - [4.3. Thư viện biểu đồ thực nghiệm (Visual Artifacts Gallery)](#43-thư-viện-biểu-đồ-thực-nghiệm-visual-artifacts-gallery)
+- [5. Kho Lưu Trữ Trọng Số & MLOps (Hugging Face Hub)](#5-kho-lưu-trữ-trọng-số--mlops-hugging-face-hub-registry)
+- [6. Cấu Trúc Kho Mã Nguồn (Repository Structure)](#6-cấu-trúc-thư-mục-kho-mã-nguồn-repository-structure)
+- [7. Hướng Dẫn Cài Đặt & Chạy Suy Luận (Quickstart & Inference)](#7-hướng-dẫn-cài-đặt--chạy-suy-luận-quickstart--inference)
+- [8. Trích Dẫn & Bản Quyền (Citations)](#8-trích-dẫn--bản-quyền-citations--acknowledgments)
+
+---
+
 ## 1. Giới Thiệu & Động Lực Lâm Sàng (Executive Summary & Clinical Rationale)
 
 Chẩn đoán tổn thương lồng ngực trên phim chụp **X-quang ngực thẳng (PA Chest Radiographs - CXR)** là bước sàng lọc đầu tay quan trọng nhất trong y khoa. Tuy nhiên, các bất thường giải phẫu học trên CXR có đặc trưng kích thước phân kỳ cực đoan:
@@ -25,7 +45,7 @@ Dự án này đề xuất một **Hệ thống Trí tuệ Nhân tạo Đa tần
 
 ---
 
-## 2. Kiến Trúc Hệ Thống (System Architecture)
+## 2. Kiến Trúc Hệ Thống Đa Tầng (System Architecture)
 
 ```mermaid
 flowchart TD
@@ -60,19 +80,33 @@ flowchart TD
 
 ### 3.1. Hợp nhất Nhãn Chuyên gia bằng Weighted Boxes Fusion (WBF)
 Thay vì sử dụng Non-Maximum Suppression (NMS) truyền thống (vốn loại bỏ hoàn toàn các box có điểm số thấp hơn và làm mất mát ý kiến đồng thuận giữa 17 bác sĩ), dự án áp dụng **Weighted Boxes Fusion (WBF)** với ngưỡng $\text{IoU} = 0.45$:
-$$X_{1,2} = \frac{\sum_{i=1}^N C_i X_{1,2}^{(i)}}{\sum_{i=1}^N C_i}, \quad Y_{1,2} = \frac{\sum_{i=1}^N C_i Y_{1,2}^{(i)}}{\sum_{i=1}^N C_i}$$
-* **Kết quả**: Tinh gọn thành công từ **29,353 boxes** xuống còn **15,654 boxes** (giảm **46.7%** lượng box trùng lặp đè lặp).
+
+$$
+X_{1,2} = \frac{\sum_{i=1}^N C_i X_{1,2}^{(i)}}{\sum_{i=1}^N C_i}, \quad Y_{1,2} = \frac{\sum_{i=1}^N C_i Y_{1,2}^{(i)}}{\sum_{i=1}^N C_i}
+$$
+
+* **Kết quả**: Tinh gọn thành công từ **29,353 boxes** xuống còn **15,654 boxes** (giảm **46.7%** lượng box trùng lặp đè lặp do 17 bác sĩ chẩn đoán độc lập). Chi tiết phân bố được lưu tại [`data_splits/eda_class_distribution_4classes.csv`](data_splits/eda_class_distribution_4classes.csv).
+
+<p align="center">
+  <img src="assets/yolo_4classes_eda_wbf.png" alt="Biểu đồ đối soát trước và sau WBF" width="850">
+  <br>
+  <em>Hình 1: Đối soát số lượng nhãn và mức độ tinh gọn hộp bao sau thuật toán Weighted Boxes Fusion (WBF).</em>
+</p>
 
 ### 3.2. Quản Trị Bộ Nhớ Bằng Liên Kết Tượng Trưng (Symlink - 0 MB Disk Overhead)
-Bộ dữ liệu ảnh VinBigData có dung lượng $>15\text{ GB}$. Việc sao chép dữ liệu trên Kaggle dễ dẫn đến lỗi cạn kiệt ổ đĩa (`Disk Out of Memory`). Bằng việc áp dụng `os.symlink`, hệ thống tạo cấu trúc thư mục YOLO chuẩn (`images/train`, `images/val`, `images/test`) trỏ trực tiếp đến dữ liệu gốc mà **tiêu tốn 0 MB dung lượng lưu trữ**.
+Bộ dữ liệu ảnh VinBigData có dung lượng $>15\text{ GB}$. Việc sao chép dữ liệu trên Kaggle dễ dẫn đến lỗi cạn kiệt ổ đĩa (`Disk Out of Memory`). Bằng việc áp dụng `os.symlink`, hệ thống tạo cấu trúc thư mục YOLO chuẩn (`images/train`, `images/val`, `images/test`) trỏ trực tiếp đến dữ liệu gốc mà **tiêu tốn 0 MB dung lượng lưu trữ**. Cấu hình tham chiếu được lưu tại [`configs/vinbigdata_4classes.yaml`](configs/vinbigdata_4classes.yaml).
 
 ### 3.3. Cơ Chế Nạp Ảnh Âm Tính (Background Injection 10%)
-Trong các tác vụ nhận diện X-quang, mô hình rất dễ bị "báo động giả" (False Positive) khi gặp các phim chụp hoàn toàn bình thường. Hệ thống phân tầng và bơm chính xác **10% ảnh hoàn toàn không có tổn thương** (`No finding`) vào tập Train, Val, Test để dạy mô hình nhận biết nền mô phổi lành.
+Trong các tác vụ nhận diện X-quang, mô hình rất dễ bị "báo động giả" (False Positive) khi gặp các phim chụp hoàn toàn bình thường. Hệ thống phân tầng và bơm chính xác **10% ảnh hoàn toàn không có tổn thương** (`No finding`) vào tập Train, Val, Test để dạy mô hình nhận biết nền mô phổi lành. Danh sách phân tầng chi tiết tại [`data_splits/train_split.csv`](data_splits/train_split.csv), [`data_splits/val_split.csv`](data_splits/val_split.csv), [`data_splits/test_split.csv`](data_splits/test_split.csv).
 
 ### 3.4. Hàm Mất Mát Hỗn Hợp Chuyên Trị Vi Mô (Focal Tversky Hybrid Loss)
-Để giải quyết tỷ lệ mất cân bằng điểm ảnh cực đoan (ranh giới màng phổi chỉ chiếm $<5\%$ tổng diện tích):
-$$\mathcal{L}_{\text{Hybrid}} = 0.6 \cdot \mathcal{L}_{\text{Tversky}}(\alpha=0.3, \beta=0.7) + 0.4 \cdot \mathcal{L}_{\text{Focal}}(\gamma=2.0)$$
-* Tham số $\beta = 0.7 > \alpha = 0.3$ phạt cực nặng các trường hợp bỏ sót tổn thương (False Negatives), bảo vệ an toàn sinh mạng người bệnh.
+Để giải quyết tỷ lệ mất cân bằng điểm ảnh cực đoan (ranh giới màng phổi chỉ chiếm $<5\%$ tổng diện tích phế trường):
+
+$$
+\mathcal{L}_{\text{Hybrid}} = 0.6 \cdot \mathcal{L}_{\text{Tversky}}(\alpha=0.3, \beta=0.7) + 0.4 \cdot \mathcal{L}_{\text{Focal}}(\gamma=2.0)
+$$
+
+* Tham số $\beta = 0.7 > \alpha = 0.3$ phạt cực nặng các trường hợp bỏ sót tổn thương (False Negatives), thúc đẩy mô hình ưu tiên độ nhạy (Recall/Sensitivity) cho bài toán sinh tử.
 
 ### 3.5. Bản Đồ Phân Loại Lỗi Lâm Sàng 4 Cột (Clinical Error Mapping)
 Mỗi ca suy luận kiểm thử được trực quan hóa trên 4 góc nhìn chuẩn y khoa:
@@ -90,9 +124,9 @@ Mỗi ca suy luận kiểm thử được trực quan hóa trên 4 góc nhìn ch
 
 ### 4.1. Phân Hệ Phân Đoạn Màng Phổi (U-Net++ trên Tập Test SIIM-ACR)
 
-| Chỉ số Đo lường | Giá trị Đạt được | Ghi chú Lâm sàng |
+| Chỉ số Đo lường | Giá trị Đạt được | Ý nghĩa Y sinh |
 | :--- | :---: | :--- |
-| **Dice Similarity Coefficient (DSC)** | **84.42%** | Độ trùng khớp vùng tràn khí màng phổi đạt chuẩn hỗ trợ chẩn đoán |
+| **Dice Similarity Coefficient (DSC)** | **84.42%** | Độ trùng khớp vùng tràn khí màng phổi đạt chuẩn hỗ trợ chẩn đoán lâm sàng |
 | **Jaccard Index (IoU)** | **82.21%** | Tỷ lệ giao trên hợp của diện tích tổn thương |
 | **Validation Raw Dice** | **78.42%** | Điểm số thô trước khi áp dụng TTA và lọc hình thái |
 | **Ngưỡng Cắt Xác Suất Tối Ưu** | **$th = 0.60$** | Dò quét ngưỡng cắt trên tập Validation bằng Sigmoid Tuning |
@@ -101,6 +135,7 @@ Mỗi ca suy luận kiểm thử được trực quan hóa trên 4 góc nhìn ch
 ---
 
 ### 4.2. Phân Hệ Định Vị Đa Vùng (YOLOv11m trên Tập Test VinBigData)
+Dữ liệu trích xuất từ bảng nghiệm thu độc lập [`metrics/test_evaluation_metrics.csv`](metrics/test_evaluation_metrics.csv):
 
 | Class ID | Nhóm Bệnh Lý Trọng Tâm (Macro-Class) | Precision ($P$) | Recall ($R$) | F1-Score | mAP@50 | mAP@50-95 |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -112,21 +147,47 @@ Mỗi ca suy luận kiểm thử được trực quan hóa trên 4 góc nhìn ch
 
 ---
 
+### 4.3. Thư Viện Biểu Đồ Thực Nghiệm (Visual Artifacts Gallery)
+
+<table align="center">
+  <tr>
+    <td align="center" width="50%">
+      <img src="assets/results.png" alt="Tiến trình huấn luyện YOLOv11m" width="100%">
+      <br>
+      <b>Hình 2: Tiến trình hàm mất mát và cải thiện mAP qua 50 Epochs</b> (Log chi tiết tại <a href="metrics/results.csv"><code>metrics/results.csv</code></a>)
+    </td>
+    <td align="center" width="50%">
+      <img src="assets/BoxPR_curve.png" alt="Đường cong Precision-Recall" width="100%">
+      <br>
+      <b>Hình 3: Đường cong Precision-Recall (BoxPR Curve)</b> trên từng Macro-Class
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img src="assets/confusion_matrix.png" alt="Ma trận nhầm lẫn" width="60%">
+      <br>
+      <b>Hình 4: Ma trận nhầm lẫn (Confusion Matrix)</b> trên tập kiểm thử độc lập
+    </td>
+  </tr>
+</table>
+
+---
+
 ## 5. Kho Lưu Trữ Trọng Số & MLOps (Hugging Face Hub Registry)
 
-Toàn bộ trọng số mô hình đã huấn luyện, lịch sử đào tạo (`training_metrics.csv`), các tệp phân chia (`train_split.csv`, `val_split.csv`, `test_split.csv`) và biểu đồ phân giải cao (300 DPI) được đồng bộ công khai:
+Toàn bộ trọng số mô hình đã huấn luyện, lịch sử đào tạo (`training_metrics.csv`), các tệp phân chia và biểu đồ phân giải cao (300 DPI) được đồng bộ công khai:
 
-* **U-Net++ Model Weights & Artifacts**:  
-  [`https://huggingface.co/JTuong/u-net`](https://huggingface.co/JTuong/u-net)
+* **U-Net++ Model Weights & Segmentation Artifacts**:  
+  [`https://huggingface.co/JTuong/u-net`](https://huggingface.co/JTuong/u-net) *(Mirror: [`JTuong/EDAMachineLearningUNet`](https://huggingface.co/JTuong/EDAMachineLearningUNet))*
   - Trọng số tối ưu: `best_unet_plus_plus.pth`
-  - Các tệp split và metrics: `train_split.csv`, `val_split.csv`, `test_split.csv`, `training_metrics.csv`
-  - Biểu đồ giải phẫu & Error map: `eda_pneumothorax_samples.png`, `training_curves.png`
+  - Biểu đồ giải phẫu học: `eda_pneumothorax_samples.png`, `training_curves.png`
+  - Dữ liệu tái lập: `train_split.csv`, `val_split.csv`, `test_split.csv`, `training_metrics.csv`
 
 * **YOLOv11m Model Weights & Detection Artifacts**:  
   [`https://huggingface.co/JTuong/EDAvaMachineLearningChestXYolo11m`](https://huggingface.co/JTuong/EDAvaMachineLearningChestXYolo11m)
   - Trọng số tối ưu: `best.pt`
-  - Biểu đồ PR-Curve & Confusion Matrix: `results.png`, `BoxPR_curve.png`, `confusion_matrix.png`, `yolo_4classes_eda_wbf.png`
-  - Cấu hình dữ liệu: `vinbigdata_4classes.yaml`, `test_evaluation_metrics.csv`
+  - Cấu hình dữ liệu & báo cáo: `vinbigdata_4classes.yaml`, `test_evaluation_metrics.csv`
+  - Biểu đồ kiểm định: `results.png`, `BoxPR_curve.png`, `confusion_matrix.png`, `yolo_4classes_eda_wbf.png`
 
 ---
 
@@ -135,8 +196,28 @@ Toàn bộ trọng số mô hình đã huấn luyện, lịch sử đào tạo (
 ```text
 yolo-unet-cxr-segmentation/
 │
+├── assets/                                # Toàn bộ biểu đồ học thuật phân giải cao (300 DPI)
+│   ├── yolo_4classes_eda_wbf.png          # Biểu đồ đối soát trước và sau khi chạy WBF
+│   ├── results.png                        # Đồ thị huấn luyện loss và mAP qua 50 epochs
+│   ├── BoxPR_curve.png                    # Đường cong Precision-Recall cho 4 nhóm bệnh lý
+│   └── confusion_matrix.png               # Ma trận nhầm lẫn đánh giá tập Test
+│
+├── configs/                               # Tệp cấu hình đường dẫn và nhãn huấn luyện
+│   └── vinbigdata_4classes.yaml           # Cấu hình dataset YOLOv11m cho 4 Macro-Classes
+│
+├── data_splits/                           # Danh sách phân tầng tập mẫu đảm bảo tính tái lập
+│   ├── eda_class_distribution_4classes.csv# Thống kê phân bố nhãn chi tiết
+│   ├── train_split.csv                    # Danh sách 3,856 ảnh tập Train (kèm background 10%)
+│   ├── val_split.csv                      # Danh sách 482 ảnh tập Validation
+│   └── test_split.csv                     # Danh sách 482 ảnh tập Test độc lập
+│
+├── metrics/                               # Kết quả nghiệm thu định lượng
+│   ├── results.csv                        # Nhật ký chi tiết 50 epochs huấn luyện
+│   └── test_evaluation_metrics.csv        # Bảng chỉ số Precision, Recall, F1, mAP@50, mAP@50-95
+│
+├── .gitignore                             # Loại trừ checkpoint nặng (.pt, .pth) và cache
 ├── README.md                              # Tài liệu kỹ thuật chi tiết của dự án
-└── Regional_diagnosis_based_on_X_ray.ipynb # Notebook hợp nhất hoàn chỉnh (61 cells, 66 outputs)
+└── Regional_diagnosis_based_on_X_ray.ipynb# Notebook hợp nhất hoàn chỉnh (61 cells, 66 outputs)
 ```
 
 ---
@@ -144,7 +225,7 @@ yolo-unet-cxr-segmentation/
 ## 7. Hướng Dẫn Cài Đặt & Chạy Suy Luận (Quickstart & Inference)
 
 ### 7.1. Cài đặt môi trường
-Khuyến nghị chạy trên môi trường Python $\ge 3.10$ với GPU hỗ trợ CUDA (Tesla T4, P100 hoặc RTX 3060 trở lên):
+Khuyến nghị môi trường Python $\ge 3.10$ với GPU hỗ trợ CUDA (Tesla T4, P100 hoặc RTX 3060 trở lên):
 
 ```bash
 git clone https://github.com/jtuongdang/yolo-unet-cxr-segmentation.git
