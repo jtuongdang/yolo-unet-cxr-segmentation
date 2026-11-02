@@ -276,7 +276,10 @@ results[0].show()
 ## 8. Trích Dẫn & Bản Quyền (Citations & Acknowledgments)
 
 Dự án sử dụng và trích dẫn các nghiên cứu và tập dữ liệu mã nguồn mở:
-1. **VinDr-CXR**: Nguyen, H. Q., et al. (2022). *VinDr-CXR: An open dataset of chest X-rays with radiologist's annotations*. Scientific Data.
+1. **VinDr-CXR (Kaggle Competition & Dataset)**:
+   - Cuộc thi chính thức: [VinBigData Chest X-ray Abnormalities Detection](https://www.kaggle.com/competitions/vinbigdata-chest-xray-abnormalities-detection)
+   - Bộ dữ liệu ảnh nén chuẩn hóa $1024 \times 1024$ JPG: [VinBigData 1024 JPG Dataset (sunghyunjun)](https://www.kaggle.com/datasets/sunghyunjun/vinbigdata-1024-jpg-dataset)
+   - Trích dẫn gốc: Nguyen, H. Q., et al. (2022). *VinDr-CXR: An open dataset of chest X-rays with radiologist's annotations*. Scientific Data.
 2. **SIIM-ACR**: *SIIM-ACR Pneumothorax Segmentation Dataset*, Society for Imaging Informatics in Medicine & American College of Radiology.
 3. **U-Net++**: Zhou, Z., et al. (2018). *UNet++: A Nested U-Net Architecture for Medical Image Segmentation*. Deep Learning in Medical Image Analysis.
 4. **Weighted Boxes Fusion**: Solovyev, R., et al. (2021). *Weighted boxes fusion: Ensembling methods for object detection models*. Image and Vision Computing.
