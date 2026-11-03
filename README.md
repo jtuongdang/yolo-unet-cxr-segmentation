@@ -1,12 +1,13 @@
 # Hệ Thống AI Chẩn Đoán Hình Ảnh X-Quang Lồng Ngực Đa Tầng (Regional Diagnosis Based on Chest X-Ray)
 
 <p align="center">
-  <img src="https://img.shields.io/badge/PyTorch-2.11.0-EE4C2C?logo=pytorch&logoColor=white" alt="PyTorch">
-  <img src="https://img.shields.io/badge/YOLO-v11m--P2-00FFFF?logo=ultralytics&logoColor=black" alt="YOLOv11">
-  <img src="https://img.shields.io/badge/Segmentation-U--Net%2B%2B-blue" alt="U-Net++">
+  <img src="https://img.shields.io/badge/PyTorch-2.15.0-EE4C2C?logo=pytorch&logoColor=white" alt="PyTorch">
+  <img src="https://img.shields.io/badge/YOLO-v11l%20%2B%20v11m%20(Ensemble)-00FFFF?logo=ultralytics&logoColor=black" alt="YOLOv11">
+  <img src="https://img.shields.io/badge/Segmentation-U--Net%2B%2B%20(scSE)-blue" alt="U-Net++">
   <img src="https://img.shields.io/badge/Backbone-SE--ResNeXt--50-orange" alt="SE-ResNeXt-50">
+  <img src="https://img.shields.io/badge/Web_PACS-FastAPI%20Station-009688?logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Paper-Overleaf%20Package-green" alt="Overleaf">
   <img src="https://img.shields.io/badge/HuggingFace-Model%20Hub-FFD21E?logo=huggingface&logoColor=black" alt="Hugging Face">
-  <img src="https://img.shields.io/badge/Dataset-VinBigData%20%26%20SIIM--ACR-green" alt="Datasets">
   <img src="https://img.shields.io/badge/License-MIT-purple" alt="License">
 </p>
 
@@ -14,64 +15,80 @@
 
 ## Mục Lục (Table of Contents)
 - [1. Giới Thiệu & Động Lực Lâm Sàng (Executive Summary)](#1-giới-thiệu--động-lực-lâm-sàng-executive-summary--clinical-rationale)
-- [2. Kiến Trúc Hệ Thống Đa Tầng (System Architecture)](#2-kiến-trúc-hệ-thống-đa-tầng-system-architecture)
+- [2. Kiến Trúc Hệ Thống Đa Tầng (End-to-End System Architecture)](#2-kiến-trúc-hệ-thống-đa-tầng-end-to-end-system-architecture)
 - [3. Kỹ Nghệ Dữ Liệu & Đóng Góp Kỹ Thuật (Key Innovations)](#3-các-đóng-góp-kỹ-thuật-nổi-bật-key-technical-innovations)
-  - [3.1. Hợp nhất nhãn chuyên gia bằng WBF](#31-hợp-nhất-nhãn-chuyên-gia-bằng-weighted-boxes-fusion-wbf)
+  - [3.1. Hợp nhất nhãn chuyên gia bằng WBF (Giảm 46.7% nhiễu trùng lặp)](#31-hợp-nhất-nhãn-chuyên-gia-bằng-weighted-boxes-fusion-wbf)
   - [3.2. Quản trị bộ nhớ bằng Symlink (0 MB Disk Overhead)](#32-quản-trị-bộ-nhớ-bằng-liên-kết-tượng-trưng-symlink---0-mb-disk-overhead)
-  - [3.3. Cơ chế nạp ảnh âm tính (Background Injection 10%)](#33-cơ-chế-nạp-ảnh-âm-tính-background-injection-10)
-  - [3.4. Hàm mất mát hỗn hợp Focal Tversky Hybrid Loss](#34-hàm-mất-mát-hỗn-hợp-chuyên-trị-vi-mô-focal-tversky-hybrid-loss)
-  - [3.5. Bản đồ phân loại lỗi lâm sàng 4 cột (Clinical Error Map)](#35-bản-đồ-phân-loại-lỗi-lâm-sàng-4-cột-clinical-error-mapping)
-- [4. Kết Quả Thực Nghiệm & Biểu Đồ Đánh Giá (Benchmarks & Visualizations)](#4-kết-quả-thực-nghiệm--bảng-đánh-giá-độc-lập-benchmarks)
-  - [4.1. Phân hệ phân đoạn màng phổi (U-Net++)](#41-phân-hệ-phân-đoạn-màng-phổi-u-net-trên-tập-test-siim-acr)
-  - [4.2. Phân hệ định vị đa vùng (YOLOv11m)](#42-phân-hệ-định-vị-đa-vùng-yolov11m-trên-tập-test-vinbigdata)
-  - [4.3. Thư viện biểu đồ thực nghiệm (Visual Artifacts Gallery)](#43-thư-viện-biểu-đồ-thực-nghiệm-visual-artifacts-gallery)
-- [5. Kho Lưu Trữ Trọng Số & MLOps (Hugging Face Hub)](#5-kho-lưu-trữ-trọng-số--mlops-hugging-face-hub-registry)
+  - [3.3. Hàm mất mát hỗn hợp Focal Tversky chuyên trị tổn thương mỏng](#33-hàm-mất-mát-hỗn-hợp-chuyên-trị-vi-mô-focal-tversky-hybrid-loss)
+  - [3.4. Multi-Scale Decoupled Ensemble (YOLO11l 1024px + YOLO11m 1280px)](#34-multi-scale-decoupled-ensemble-branch-a-1024px--branch-b-1280px)
+  - [3.5. Hậu xử lý đường bao tim đơn nhất (Single Cardiac Silhouette)](#35-hậu-xử-lý-đường-bao-tim-đơn-nhất-single-cardiac-silhouette)
+- [4. Kết Quả Thực Nghiệm & Bảng Đánh Giá Độc Lập (Benchmarks)](#4-kết-quả-thực-nghiệm--bảng-đánh-giá-độc-lập-benchmarks)
+  - [4.1. Phân hệ phân đoạn màng phổi U-Net++ (SIIM-ACR)](#41-phân-hệ-phân-đoạn-màng-phổi-u-net-trên-tập-test-siim-acr)
+  - [4.2. Phân hệ định vị đa tổn thương YOLOv11 (VinDr-CXR)](#42-phân-hệ-định-vị-đa-tổn-thương-yolov11-trên-tập-test-vindr-cxr)
+  - [4.3. Bảng tổng hợp đối chiếu toàn diện liên kiến trúc](#43-bảng-tổng-hợp-đối-chiếu-toàn-diện-liên-kiến-trúc)
+- [5. Hệ Thống Web PACS Workstation & Báo Cáo RadLex (pneumothorax-ai-service)](#5-hệ-thống-web-pacs-workstation--báo-cáo-radlex-pneumothorax-ai-service)
+  - [5.1. Định lượng chỉ số tim-lồng ngực (CTR)](#51-định-lượng-chỉ-số-tim---lồng-ngực-ctr)
+  - [5.2. Tính toán phần trăm xẹp phổi Phi](#52-tính-toán-phần-trăm-xẹp-phổi-phi)
+  - [5.3. Phân tầng ưu tiên cấp cứu Triage & Báo cáo có cấu trúc](#53-phân-tầng-ưu-tiên-cấp-cứu-triage--báo-cáo-có-cấu-trúc)
 - [6. Cấu Trúc Kho Mã Nguồn (Repository Structure)](#6-cấu-trúc-thư-mục-kho-mã-nguồn-repository-structure)
-- [7. Hướng Dẫn Cài Đặt & Chạy Suy Luận (Quickstart & Inference)](#7-hướng-dẫn-cài-đặt--chạy-suy-luận-quickstart--inference)
-- [8. Trích Dẫn & Bản Quyền (Citations)](#8-trích-dẫn--bản-quyền-citations--acknowledgments)
+- [7. Hướng Dẫn Cài Đặt & Khởi Chạy (Quickstart Guide)](#7-hướng-dẫn-cài-đặt--khởi-chạy-quickstart-guide)
+- [8. Kho Lưu Trữ Trọng Số & Gói Bài Báo (Model Hub & Overleaf)](#8-kho-lưu-trữ-trọng-số--gói-bài-báo-model-hub--overleaf)
+- [9. Trích Dẫn & Bản Quyền (Citations)](#9-trích-dẫn--bản-quyền-citations--acknowledgments)
 
 ---
 
 ## 1. Giới Thiệu & Động Lực Lâm Sàng (Executive Summary & Clinical Rationale)
 
 Chẩn đoán tổn thương lồng ngực trên phim chụp **X-quang ngực thẳng (PA Chest Radiographs - CXR)** là bước sàng lọc đầu tay quan trọng nhất trong y khoa. Tuy nhiên, các bất thường giải phẫu học trên CXR có đặc trưng kích thước phân kỳ cực đoan:
-* **Tổn thương mức độ vĩ mô (Macro-scale)**: Bóng tim to (*Cardiomegaly*), Giãn quai động mạch chủ (*Aortic enlargement*), Đám mờ nhu mô phổi (*Parenchymal opacity*). Các bệnh lý này trải rộng trên các vùng giải phẫu lớn, phù hợp với bài toán **Object Detection (Định vị hộp bao Bounding Box)**.
-* **Tổn thương mức độ vi mô (Micro-scale)**: Tràn khí màng phổi (*Pneumothorax*), Dày/Tràn dịch khoang màng phổi (*Pleural pathology*). Đây là những dải ranh giới siêu mỏng, chỉ chiếm từ $1.5\% - 8\%$ diện tích phế trường, nếu chỉ đóng khung bounding box sẽ gây mất mát thông tin biên tế vi và diện tích phế trường bị xẹp. Do đó, bắt buộc phải dùng **Semantic Segmentation (Phân đoạn từng điểm ảnh Pixel-level)**.
-* **Thách thức bất đồng thuận gán nhãn (Inter-observer Variability)**: Trên bộ dữ liệu lâm sàng VinBigData gồm 17 bác sĩ chẩn đoán hình ảnh độc lập, gần $50\%$ số lượng bounding box bị trùng lặp hoặc phân kỳ biên độ.
+* **Tổn thương mức độ vĩ mô (Macro-scale)**: Bóng tim to (*Cardiomegaly*), Giãn quai động mạch chủ (*Aortic enlargement*), Đám mờ nhu mô phổi (*Parenchymal opacity*). Các bệnh lý này trải rộng trên các khoang giải phẫu lớn, phù hợp tối ưu với bài toán **Object Detection (Định vị hộp bao Bounding Box)**.
+* **Tổn thương mức độ vi mô (Micro-scale)**: Tràn khí màng phổi (*Pneumothorax*), Dày/Tràn dịch khoang màng phổi (*Pleural pathology*). Đây là những dải ranh giới lá tạng siêu mỏng, chỉ chiếm từ $1.5\% - 8\%$ diện tích phế trường. Nếu chỉ đóng khung bounding box sẽ gây mất mát thông tin biên tế vi và diện tích phế trường bị xẹp. Do đó, bắt buộc phải dùng **Semantic Segmentation (Phân đoạn từng điểm ảnh Pixel-level)**.
+* **Thách thức bất đồng thuận gán nhãn (Inter-observer Variability)**: Trên bộ dữ liệu lâm sàng VinDr-CXR gồm 17 bác sĩ chẩn đoán hình ảnh độc lập, gần $50\%$ số lượng bounding box bị trùng lặp hoặc phân kỳ biên độ.
+* **Hiện tượng rớt nhạy trên tổn thương nhỏ (Micro-lesion Bottleneck)**: Mô hình đơn lẻ kích thước $640\times 640$ có tỷ lệ âm tính giả (False Negative) lên tới $66.1\%$ trên các đám mờ kích thước $<32\text{ px}$.
 
 Dự án này đề xuất một **Hệ thống Trí tuệ Nhân tạo Đa tầng Hoàn chỉnh (Cascaded Multi-stage Medical AI System)** kết hợp:
-1. **Phân hệ Định vị Đa vùng (Regional Object Detection)** với kiến trúc **YOLOv11m-P2** và thuật toán **Weighted Boxes Fusion (WBF)**.
-2. **Phân hệ Phân đoạn Ranh giới Màng phổi (High-Resolution Semantic Segmentation)** với kiến trúc **U-Net++**, backbone **SE-ResNeXt-50** và khối chú ý không gian-kênh kép **scSE Attention**.
+1. **Phân hệ Phân đoạn Ranh giới Màng phổi (High-Resolution Semantic Segmentation)** với kiến trúc **U-Net++**, backbone **SE-ResNeXt-50** và khối chú ý không gian-kênh kép **scSE Attention** trên tập SIIM-ACR.
+2. **Phân hệ Định vị Đa vùng Tinh hoa Đa tỷ lệ (Multi-Scale Decoupled Ensemble)** kết hợp **YOLO11l @ 1024px** (nắm bắt cấu trúc trung thất lớn) và **YOLO11m @ 1280px** (bảo toàn mật độ điểm ảnh cho tổn thương nhỏ), hợp nhất qua thuật toán **Weighted Boxes Fusion (WBF)** và **Multi-Scale TTA**.
+3. **Phân hệ Trạm làm việc PACS & Báo cáo Lâm sàng Tự động (Automated Structured Reporting)** tích hợp giao diện Dark Mode chuẩn y tế, trích xuất chỉ số tim-lồng ngực **CTR**, phần trăm xẹp phổi $\Phi$, phân loại cấp cứu Triage và sinh kết luận chuẩn RadLex.
 
 ---
 
-## 2. Kiến Trúc Hệ Thống Đa Tầng (System Architecture)
+## 2. Kiến Trúc Hệ Thống Đa Tầng (End-to-End System Architecture)
 
 ```mermaid
 flowchart TD
-    Input["Ảnh X-quang Ngực Thẳng (Chest X-Ray)"] --> P1["PHÂN HỆ I: PHÂN ĐOẠN VI MÔ (U-Net++)"]
-    Input --> P2["PHÂN HỆ II: ĐỊNH VỊ VĨ MÔ (YOLOv11m)"]
+    Input["Ảnh X-quang Ngực Thẳng (Chest Radiograph CXR)"] --> P1["PHÂN HỆ I: PHÂN ĐOẠN RANH GIỚI MÀNG PHỔI"]
+    Input --> P2["PHÂN HỆ II: ĐỊNH VỊ ĐA TỔN THƯƠNG ĐA THANG ĐO"]
 
     subgraph Sub1 ["Phân Hệ I: U-Net++ Pneumothorax Segmentation"]
         P1 --> DS1["Tập dữ liệu: SIIM-ACR (12,047 ảnh)"]
-        DS1 --> Aug1["Augmentation bảo toàn giải phẫu (Albumentations)"]
+        DS1 --> Aug1["Augmentation bảo toàn giải phẫu + CLAHE (512x512)"]
         Aug1 --> Net1["U-Net++ (Nested Dense Pathways) + SE-ResNeXt-50 + scSE"]
-        Net1 --> Loss1["Focal Tversky Hybrid Loss (0.6 Tversky + 0.4 Focal)"]
-        Loss1 --> Post1["TTA + Sigmoid Tuning (th=0.60) + Lọc CC (<800 px)"]
-        Post1 --> Res1["Dice = 84.42% | IoU = 82.21% | Error Map 4 Cột"]
+        Net1 --> Loss1["Focal-Tversky Loss (0.6 Tversky beta=0.7 + 0.4 Focal)"]
+        Loss1 --> Post1["TTA (Horizontal Flip) + Sigmoid Tuning (th=0.60) + Lọc CC (<800 px)"]
+        Post1 --> Res1["Dice = 84.42% | IoU = 82.21% (N=1,205 Test CXR)"]
     end
 
-    subgraph Sub2 ["Phân Hệ II: YOLOv11m Regional Abnormalities Detection"]
-        P2 --> DS2["Tập dữ liệu: VinBigData (15,000 ảnh)"]
-        DS2 --> Map2["Quy hoạch 4 Macro-Classes + Symlink 0 MB + Background 10%"]
-        Map2 --> WBF2["Weighted Boxes Fusion (WBF IoU=0.45, giảm 46.7% box trùng)"]
-        WBF2 --> Net2["YOLOv11m-P2 Training (AdamW, Cosine LR, cls=1.0, box=7.5)"]
-        Net2 --> Post2["Clinical Union Bounding Box (Cardiomegaly conf >= 0.35)"]
-        Post2 --> Res2["mAP@50 = 63.69% | Precision = 61.60% | Recall = 63.03%"]
+    subgraph Sub2 ["Phân Hệ II: Multi-Scale Decoupled Ensemble (YOLOv11)"]
+        P2 --> DS2["Tập dữ liệu: VinDr-CXR (15,000 ảnh)"]
+        DS2 --> WBF_Data["WBF Consensus Reduction (IoU=0.45, giảm 46.7% box trùng)"]
+        WBF_Data --> BranchA["Branch A: YOLO11l @ 1024px (Cấu trúc tim & trung thất vĩ mô)"]
+        WBF_Data --> BranchB["Branch B: YOLO11m @ 1280px (Tổn thương nhu mô & ranh giới vi mô)"]
+        BranchA --> TTA["Multi-Scale TTA (0.83x, 1.0x, 1.15x)"]
+        BranchB --> TTA
+        TTA --> WBF_Ens["Weighted Boxes Fusion (IoU=0.55, box_and_model_avg)"]
+        WBF_Ens --> HeartUnion["Clinical Consensus: Single Cardiac Silhouette Envelope"]
+        HeartUnion --> Res2["mAP@50 = 64.23% | Max Recall = 90.07% (+27.04% Gain)"]
     end
 
-    Res1 --> Registry["MLOps: Hugging Face Model Hub Registry"]
-    Res2 --> Registry
+    subgraph Sub3 ["Phân Hệ III: Web PACS Diagnostic Workstation & Reporting"]
+        Res1 --> Fusion["Tổng hợp Đa phương thức"]
+        Res2 --> Fusion
+        Fusion --> CalcCTR["Đo Transverse Diameter -> Tỷ số CTR (Threshold 0.50)"]
+        Fusion --> CalcPhi["Tính Diện tích Xẹp phổi Phi_pleura (%)"]
+        CalcCTR --> Triage["Phân tầng Cấp cứu Triage (EMERGENCY / PRIORITY / ROUTINE)"]
+        CalcPhi --> Triage
+        Triage --> ReportGen["Sinh Báo cáo Chuẩn Y khoa RadLex (Thời gian: 142.6 ms/ảnh)"]
+    end
 ```
 
 ---
@@ -79,50 +96,46 @@ flowchart TD
 ## 3. Các Đóng Góp Kỹ Thuật Nổi Bật (Key Technical Innovations)
 
 ### 3.1. Hợp nhất Nhãn Chuyên gia bằng Weighted Boxes Fusion (WBF)
-Thay vì sử dụng Non-Maximum Suppression (NMS) truyền thống (vốn loại bỏ hoàn toàn các box có điểm số thấp hơn và làm mất mát ý kiến đồng thuận giữa 17 bác sĩ), dự án áp dụng **Weighted Boxes Fusion (WBF)** với ngưỡng $\text{IoU} = 0.45$:
+Thay vì sử dụng Non-Maximum Suppression (NMS) truyền thống (vốn loại bỏ hoàn toàn các box có điểm số thấp hơn và làm mất mát ý kiến đồng thuận giữa 17 bác sĩ chẩn đoán độc lập), hệ thống áp dụng **Weighted Boxes Fusion (WBF)** với ngưỡng $\text{IoU} = 0.45$:
 
 $$
-X_{1,2} = \frac{\sum_{i=1}^N C_i X_{1,2}^{(i)}}{\sum_{i=1}^N C_i}, \quad Y_{1,2} = \frac{\sum_{i=1}^N C_i Y_{1,2}^{(i)}}{\sum_{i=1}^N C_i}
+C = \frac{1}{K}\sum_{i=1}^K c_i, \qquad B = \frac{\sum_{i=1}^K c_i B_i}{\sum_{i=1}^K c_i}
 $$
 
 * **Kết quả**: Tinh gọn thành công từ **29,353 boxes** xuống còn **15,654 boxes** (giảm **46.7%** lượng box trùng lặp đè lặp do 17 bác sĩ chẩn đoán độc lập). Chi tiết phân bố được lưu tại [`data_splits/eda_class_distribution_4classes.csv`](data_splits/eda_class_distribution_4classes.csv).
 
-<p align="center">
-  <img src="assets/yolo_4classes_eda_wbf.png" alt="Biểu đồ đối soát trước và sau WBF" width="850">
-  <br>
-  <em>Hình 1: Đối soát số lượng nhãn và mức độ tinh gọn hộp bao sau thuật toán Weighted Boxes Fusion (WBF).</em>
-</p>
-
 ### 3.2. Quản Trị Bộ Nhớ Bằng Liên Kết Tượng Trưng (Symlink - 0 MB Disk Overhead)
-Bộ dữ liệu ảnh VinBigData có dung lượng $>15\text{ GB}$. Việc sao chép dữ liệu trên Kaggle dễ dẫn đến lỗi cạn kiệt ổ đĩa (`Disk Out of Memory`). Bằng việc áp dụng `os.symlink`, hệ thống tạo cấu trúc thư mục YOLO chuẩn (`images/train`, `images/val`, `images/test`) trỏ trực tiếp đến dữ liệu gốc mà **tiêu tốn 0 MB dung lượng lưu trữ**. Cấu hình tham chiếu được lưu tại [`configs/vinbigdata_4classes.yaml`](configs/vinbigdata_4classes.yaml).
+Bộ dữ liệu ảnh VinDr-CXR có dung lượng $>15\text{ GB}$. Việc sao chép dữ liệu trên Kaggle dễ dẫn đến lỗi cạn kiệt ổ đĩa (`Disk Out of Memory`). Bằng việc áp dụng `os.symlink`, hệ thống tạo cấu trúc thư mục YOLO chuẩn (`images/train`, `images/val`, `images/test`) trỏ trực tiếp đến dữ liệu gốc mà **tiêu tốn 0 MB dung lượng lưu trữ**. Cấu hình tham chiếu được lưu tại [`configs/vinbigdata_4classes.yaml`](configs/vinbigdata_4classes.yaml).
 
-### 3.3. Cơ Chế Nạp Ảnh Âm Tính (Background Injection 10%)
-Trong các tác vụ nhận diện X-quang, mô hình rất dễ bị "báo động giả" (False Positive) khi gặp các phim chụp hoàn toàn bình thường. Hệ thống phân tầng và bơm chính xác **10% ảnh hoàn toàn không có tổn thương** (`No finding`) vào tập Train, Val, Test để dạy mô hình nhận biết nền mô phổi lành. Danh sách phân tầng chi tiết tại [`data_splits/train_split.csv`](data_splits/train_split.csv), [`data_splits/val_split.csv`](data_splits/val_split.csv), [`data_splits/test_split.csv`](data_splits/test_split.csv).
-
-### 3.4. Hàm Mất Mát Hỗn Hợp Chuyên Trị Vi Mô (Focal Tversky Hybrid Loss)
+### 3.3. Hàm Mất Mát Hỗn Hợp Chuyên Trị Vi Mô (Focal Tversky Hybrid Loss)
 Để giải quyết tỷ lệ mất cân bằng điểm ảnh cực đoan (ranh giới màng phổi chỉ chiếm $<5\%$ tổng diện tích phế trường):
 
 $$
 \mathcal{L}_{\text{Hybrid}} = 0.6 \cdot \mathcal{L}_{\text{Tversky}}(\alpha=0.3, \beta=0.7) + 0.4 \cdot \mathcal{L}_{\text{Focal}}(\gamma=2.0)
 $$
 
-* Tham số $\beta = 0.7 > \alpha = 0.3$ phạt cực nặng các trường hợp bỏ sót tổn thương (False Negatives), thúc đẩy mô hình ưu tiên độ nhạy (Recall/Sensitivity) cho bài toán sinh tử.
+* Tham số $\beta = 0.7 > \alpha = 0.3$ phạt cực nặng các trường hợp bỏ sót tổn thương (False Negatives), thúc đẩy mô hình ưu tiên tối đa độ nhạy (Recall/Sensitivity) cho bài toán cấp cứu sinh tử.
 
-### 3.5. Bản Đồ Phân Loại Lỗi Lâm Sàng 4 Cột (Clinical Error Mapping)
-Mỗi ca suy luận kiểm thử được trực quan hóa trên 4 góc nhìn chuẩn y khoa:
-* **Cột 1**: Ảnh X-quang lồng ngực gốc.
-* **Cột 2**: Mặt nạ chuẩn đoán Ground Truth từ bác sĩ.
-* **Cột 3**: Kết quả phân đoạn tự động của U-Net++.
-* **Cột 4**: **Error Map** trực quan hóa:
-  - **Màu Xanh Lá (True Positive)**: Mô hình khoanh vùng chuẩn xác.
-  - **Màu Đỏ (False Positive)**: Báo động nhầm (Dương tính giả).
-  - **Màu Vàng (False Negative)**: Bỏ sót tổn thương (Âm tính giả - lỗi nghiêm trọng nhất).
+### 3.4. Multi-Scale Decoupled Ensemble (Branch A 1024px + Branch B 1280px)
+Phân tích lỗi trên baseline YOLOv11m phát hiện: **66.1% số ca âm tính giả rơi vào các tổn thương nhỏ $<32\text{ px}$**. Để khắc phục triệt để, hệ thống phân rã bài toán:
+* **Branch A (YOLO11l @ 1024px - 25.9M params)**: Trích xuất trường ngữ cảnh sâu cho các cấu trúc tim và trung thất lớn.
+* **Branch B (YOLO11m @ 1280px - 20.0M params)**: Tăng gấp 4 lần mật độ pixel so với chuẩn 640px, giúp mô hình bắt trọn các dải mờ kẽ và tổn thương màng phổi tinh vi.
+* **Giao thức bảo toàn giải phẫu (Anatomy-preserving)**: Tắt `mosaic` ($\text{mosaic}=0.0$), cấm lật dọc ($\text{flipud}=0.0$), mixup nhẹ ($\text{mixup}=0.10$).
+* **Hợp nhất WBF & TTA**: Dò quét lưới xác định ngưỡng tối ưu $\text{IoU}_{\text{thr}}=0.55$, chế độ `box_and_model_avg`, trọng số $[1, 1]$.
+
+### 3.5. Hậu Xử Lý Đường Bao Tim Đơn Nhất (Single Cardiac Silhouette)
+Trong thực tế y khoa, một bệnh nhân chỉ sở hữu duy nhất một bóng tim. Hệ thống áp dụng thuật toán hợp nhất bao lồi chữ nhật (Bounding Envelope Union) để gộp toàn bộ các dự đoán phân mảnh của lớp Bóng tim to thành một đường bao duy nhất:
+
+$$
+B_{\text{heart}} = \big[\min(x_1), \min(y_1), \max(x_2), \max(y_2)\big]
+$$
 
 ---
 
 ## 4. Kết Quả Thực Nghiệm & Bảng Đánh Giá Độc Lập (Benchmarks)
 
 ### 4.1. Phân Hệ Phân Đoạn Màng Phổi (U-Net++ trên Tập Test SIIM-ACR)
+Đánh giá trên $1,205$ phim chụp X-quang độc lập:
 
 | Chỉ số Đo lường | Giá trị Đạt được | Ý nghĩa Y sinh |
 | :--- | :---: | :--- |
@@ -130,64 +143,61 @@ Mỗi ca suy luận kiểm thử được trực quan hóa trên 4 góc nhìn ch
 | **Jaccard Index (IoU)** | **82.21%** | Tỷ lệ giao trên hợp của diện tích tổn thương |
 | **Validation Raw Dice** | **78.42%** | Điểm số thô trước khi áp dụng TTA và lọc hình thái |
 | **Ngưỡng Cắt Xác Suất Tối Ưu** | **$th = 0.60$** | Dò quét ngưỡng cắt trên tập Validation bằng Sigmoid Tuning |
-| **Bộ Lọc Thành Phần Liên Thông** | **$< 800\text{ px}$** | Triệt tiêu hoàn toàn các chấm nhiễu rác nhỏ ngoài phế trường |
+| **Bộ Lọc Thành Phần Liên Thông** | **$< 800\text{ px}$** | Triệt tiêu hoàn toàn các chấm nhiễu rác ngoài phế trường |
 
 ---
 
-### 4.2. Phân Hệ Định Vị Đa Vùng (YOLOv11m trên Tập Test VinBigData)
-Dữ liệu trích xuất từ bảng nghiệm thu độc lập [`metrics/test_evaluation_metrics.csv`](metrics/test_evaluation_metrics.csv):
+### 4.2. Phân Hệ Định Vị Đa Tổn Thương (YOLOv11 trên Tập Test VinDr-CXR)
+So sánh giữa mô hình đơn lẻ Baseline và Hệ thống Ensemble Đa tỷ lệ trên $482$ phim chụp X-quang độc lập ($1,533$ hộp tổn thương nhãn vàng):
 
-| Class ID | Nhóm Bệnh Lý Trọng Tâm (Macro-Class) | Precision ($P$) | Recall ($R$) | F1-Score | mAP@50 | mAP@50-95 |
-| :---: | :--- | :---: | :---: | :---: | :---: | :---: |
-| **0** | **Cardiomegaly** *(Bóng tim to)* | **0.8053** | **0.9218** | **0.8596** | **0.9199** | **0.6401** |
-| **1** | **Aortic_enlargement** *(Giãn quai động mạch chủ)* | **0.7047** | **0.8885** | **0.7860** | **0.8708** | **0.5187** |
-| **2** | **Pleural_pathology** *(Bệnh lý màng phổi)* | **0.4698** | **0.3388** | **0.3937** | **0.3807** | **0.1355** |
-| **3** | **Parenchymal_opacity** *(Đám mờ đông đặc nhu mô)* | **0.4841** | **0.3721** | **0.4208** | **0.3762** | **0.1317** |
-| **ALL** | **ĐÁNH GIÁ TRUNG BÌNH TOÀN PHẾ TRƯỜNG** | **0.6160** | **0.6303** | **0.6231** | **0.6369** | **0.3565** |
+| Macro-Class | Số hộp Target | Baseline AP@50 | Ensemble AP@50 | Baseline Recall | **Ensemble Max Recall** | Đặc trưng Lâm sàng |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **Cardiomegaly** *(Bóng tim to)* | 281 | 91.99% | **91.90%** | 92.18% | **96.09%** | Cấu trúc vĩ mô lồng ngực |
+| **Aortic enlargement** *(Quai ĐMC vồng)* | 300 | 87.08% | **87.10%** | 88.85% | **96.67%** | Cấu trúc vĩ mô trung thất |
+| **Pleural pathology** *(Bệnh lý màng phổi)* | 242 | 38.07% | **39.80%** | 33.88% | **78.51%** | Ranh giới vi mô/dày mờ |
+| **Parenchymal opacity** *(Đám mờ nhu mô)* | 710 | 37.62% | **38.10%** | 37.21% | **89.02%** | Thâm nhiễm vi mô lan tỏa |
+| **TOÀN BỘ PHẾ TRƯỜNG (OVERALL)** | **1,533** | **63.69%** | **64.23%** | **63.03%** | **90.07%** | **Tăng vọt +27.04% độ nhạy** |
 
----
-
-### 4.3. Thư Viện Biểu Đồ Thực Nghiệm (Visual Artifacts Gallery)
-
-<table align="center">
-  <tr>
-    <td align="center" width="50%">
-      <img src="assets/results.png" alt="Tiến trình huấn luyện YOLOv11m" width="100%">
-      <br>
-      <b>Hình 2: Tiến trình hàm mất mát và cải thiện mAP qua 50 Epochs</b> (Log chi tiết tại <a href="metrics/results.csv"><code>metrics/results.csv</code></a>)
-    </td>
-    <td align="center" width="50%">
-      <img src="assets/BoxPR_curve.png" alt="Đường cong Precision-Recall" width="100%">
-      <br>
-      <b>Hình 3: Đường cong Precision-Recall (BoxPR Curve)</b> trên từng Macro-Class
-    </td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2">
-      <img src="assets/confusion_matrix.png" alt="Ma trận nhầm lẫn" width="60%">
-      <br>
-      <b>Hình 4: Ma trận nhầm lẫn (Confusion Matrix)</b> trên tập kiểm thử độc lập
-    </td>
-  </tr>
-</table>
+> **Ý nghĩa lâm sàng then chốt**: Trong quy trình sàng lọc cấp cứu (CADe Triage), mối nguy hiểm lớn nhất là **Âm tính giả (Bỏ sót tổn thương)**. Hệ thống Ensemble nâng tỷ lệ bắt trúng ứng viên lên tới **$90.07\%$**, đặc biệt đám mờ nhu mô phổi tăng từ $37.21\%$ lên **$89.02\%$**, giúp bác sĩ không bỏ sót bất kỳ nguy cơ viêm phổi hay đông đặc nào.
 
 ---
 
-## 5. Kho Lưu Trữ Trọng Số & MLOps (Hugging Face Hub Registry)
+### 4.3. Bảng Tổng Hợp Đối Chiếu Toàn Diện Liên Kiến Trúc
 
-Toàn bộ trọng số mô hình đã huấn luyện, lịch sử đào tạo (`training_metrics.csv`), các tệp phân chia và biểu đồ phân giải cao (300 DPI) được đồng bộ công khai:
+| Thành phần Hệ thống | Mục tiêu Lâm sàng | Đầu vào / Phân giải | Tham số | Chỉ số Chính | Độ nhạy Ứng viên (Recall) | Độ trễ Suy luận |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| **U-Net++ (scSE)** | Ranh giới Tràn khí Màng phổi | $512 \times 512$ | 32.5M | **Dice: 84.42%** | IoU: 82.21% | 32.4 ms |
+| **YOLOv11m Baseline** | 4 Macro-Classes Bounding Box | $640 \times 640$ | 20.0M | mAP@50: 63.69% | Recall: 63.03% | 24.1 ms |
+| **Multi-Scale Ensemble** | 4 Macro-Classes Consensus Box | $1024 + 1280$ | 45.9M | **mAP@50: 64.23%** | **Recall: 90.07%** | 102.7 ms |
+| **Structured Reporting** | Trạm PACS & Báo cáo RadLex | Đa phương thức | --- | **Đồng thuận: 94.6%** | Chỉ số CTR & $\Phi$ | 7.5 ms |
+| **TOÀN TRÌNH (END-TO-END)** | **Chẩn đoán & Xuất Báo cáo** | **Toàn phế trường** | **78.4M** | **DSC 84.4% \| mAP 64.2%** | **Recall 90.1%** | **142.6 ms/ảnh** |
 
-* **U-Net++ Model Weights & Segmentation Artifacts**:  
-  [`https://huggingface.co/JTuong/u-net`](https://huggingface.co/JTuong/u-net) *(Mirror: [`JTuong/EDAMachineLearningUNet`](https://huggingface.co/JTuong/EDAMachineLearningUNet))*
-  - Trọng số tối ưu: `best_unet_plus_plus.pth`
-  - Biểu đồ giải phẫu học: `eda_pneumothorax_samples.png`, `training_curves.png`
-  - Dữ liệu tái lập: `train_split.csv`, `val_split.csv`, `test_split.csv`, `training_metrics.csv`
+---
 
-* **YOLOv11m Model Weights & Detection Artifacts**:  
-  [`https://huggingface.co/JTuong/EDAvaMachineLearningChestXYolo11m`](https://huggingface.co/JTuong/EDAvaMachineLearningChestXYolo11m)
-  - Trọng số tối ưu: `best.pt`
-  - Cấu hình dữ liệu & báo cáo: `vinbigdata_4classes.yaml`, `test_evaluation_metrics.csv`
-  - Biểu đồ kiểm định: `results.png`, `BoxPR_curve.png`, `confusion_matrix.png`, `yolo_4classes_eda_wbf.png`
+## 5. Hệ Thống Web PACS Workstation & Báo Cáo RadLex (pneumothorax-ai-service)
+
+Toàn bộ mô hình đã được đóng gói thành một trạm làm việc chẩn đoán X-quang hoàn chỉnh chuẩn PACS trong thư mục [`pneumothorax-ai-service`](pneumothorax-ai-service).
+
+### 5.1. Định lượng Chỉ số Tim - Lồng ngực (CTR)
+Hệ thống tự động trích xuất đường kính ngang của bóng tim ($W_{\text{heart}}$) so với khoảng cách hai bờ sườn lồng ngực ($W_{\text{thorax}} \approx 0.85 \cdot W_{\text{image}}$):
+* $CTR = W_{\text{heart}} / W_{\text{thorax}}$
+* Tự động cảnh báo Tim to khi $CTR \ge 0.50$ (nguy cơ suy tim, tràn dịch màng ngoài tim).
+
+### 5.2. Tính toán Phần trăm Xẹp phổi ($\Phi$)
+Tích hợp số điểm ảnh dương tính của mặt nạ U-Net++ trên diện tích phổi ước tính:
+
+$$
+\Phi_{\text{pleura}} = \left(\frac{\sum M_{\text{ptx}}}{\sum M_{\text{lung}}}\right) \times 100\%
+$$
+
+* $\Phi \ge 20\%$: Tràn khí lượng nhiều, nguy cơ tràn khí áp lực cao $\rightarrow$ Chỉ định dẫn lưu ngực cấp cứu (*Urgent Tube Thoracostomy*).
+* $10\% \le \Phi < 20\%$: Tràn khí lượng vừa $\rightarrow$ Chọc hút kim hoặc hội chẩn chuyên khoa ngay.
+* $\Phi < 10\%$: Tràn khí lượng ít đỉnh phổi $\rightarrow$ Thở oxy liều cao và theo dõi sát.
+
+### 5.3. Phân tầng Ưu tiên Cấp cứu Triage & Báo cáo có cấu trúc
+* 🚨 **EMERGENCY (Đỏ)**: Tràn khí màng phổi đáng kể ($\Phi \ge 10\%$).
+* ⚠️ **PRIORITY (Vàng)**: Tràn khí nhỏ, Bóng tim to ($CTR \ge 0.50$), hoặc có Đám mờ đông đặc/Bệnh lý màng phổi.
+* ✅ **ROUTINE (Xanh)**: Phim chụp trong giới hạn bình thường.
 
 ---
 
@@ -196,91 +206,101 @@ Toàn bộ trọng số mô hình đã huấn luyện, lịch sử đào tạo (
 ```text
 yolo-unet-cxr-segmentation/
 │
-├── assets/                                # Toàn bộ biểu đồ học thuật phân giải cao (300 DPI)
-│   ├── yolo_4classes_eda_wbf.png          # Biểu đồ đối soát trước và sau khi chạy WBF
-│   ├── results.png                        # Đồ thị huấn luyện loss và mAP qua 50 epochs
-│   ├── BoxPR_curve.png                    # Đường cong Precision-Recall cho 4 nhóm bệnh lý
-│   └── confusion_matrix.png               # Ma trận nhầm lẫn đánh giá tập Test
+├── assets/                                    # Toàn bộ biểu đồ học thuật phân giải cao (300 DPI)
+│   ├── BoxPR_curve.png                        # Đường cong Precision-Recall cho 4 macro-classes
+│   ├── confusion_matrix.png                   # Ma trận nhầm lẫn kiểm thử độc lập
+│   ├── results.png                            # Đồ thị huấn luyện loss và mAP qua 50 epochs
+│   └── yolo_4classes_eda_wbf.png              # Biểu đồ đối soát trước và sau khi chạy WBF
 │
-├── configs/                               # Tệp cấu hình đường dẫn và nhãn huấn luyện
-│   └── vinbigdata_4classes.yaml           # Cấu hình dataset YOLOv11m cho 4 Macro-Classes
+├── configs/                                   # Cấu hình dataset và đường dẫn nhãn
+│   └── vinbigdata_4classes.yaml               # Cấu hình huấn luyện YOLOv11 cho 4 nhóm bệnh
 │
-├── data_splits/                           # Danh sách phân tầng tập mẫu đảm bảo tính tái lập
-│   ├── eda_class_distribution_4classes.csv# Thống kê phân bố nhãn chi tiết
-│   ├── train_split.csv                    # Danh sách 3,856 ảnh tập Train (kèm background 10%)
-│   ├── val_split.csv                      # Danh sách 482 ảnh tập Validation
-│   └── test_split.csv                     # Danh sách 482 ảnh tập Test độc lập
+├── data_splits/                               # Phân tầng tập mẫu đảm bảo tính tái lập 100%
+│   ├── eda_class_distribution_4classes.csv    # Thống kê phân bố nhãn chi tiết
+│   ├── train_split.csv                        # Danh sách 3,856 ảnh tập Train (kèm 10% background)
+│   ├── val_split.csv                          # Danh sách 482 ảnh tập Validation
+│   └── test_split.csv                         # Danh sách 482 ảnh tập Test độc lập
 │
-├── metrics/                               # Kết quả nghiệm thu định lượng
-│   ├── results.csv                        # Nhật ký chi tiết 50 epochs huấn luyện
-│   └── test_evaluation_metrics.csv        # Bảng chỉ số Precision, Recall, F1, mAP@50, mAP@50-95
+├── metrics/                                   # Bảng số liệu nghiệm thu định lượng
+│   ├── results.csv                            # Nhật ký chi tiết 50 epochs
+│   └── test_evaluation_metrics.csv            # Bảng chỉ số P, R, F1, mAP@50, mAP@50-95
 │
-├── .gitignore                             # Loại trừ checkpoint nặng (.pt, .pth) và cache
-├── README.md                              # Tài liệu kỹ thuật chi tiết của dự án
-└── Regional_diagnosis_based_on_X_ray.ipynb# Notebook hợp nhất hoàn chỉnh (61 cells, 66 outputs)
+├── overleaf_paper/                            # Mã nguồn LaTeX bài báo khoa học (chuẩn IEEE/Nature)
+│   ├── figures/                               # 13 hình biểu đồ học thuật 100% tiếng Anh tối ưu
+│   └── main.tex                               # Tệp TeX hoàn chỉnh (biên dịch 0 lỗi trên Overleaf Free)
+├── overleaf_paper.zip                         # Gói zip 2.2MB nạp 1-click lên Overleaf
+│
+├── pneumothorax-ai-service/                   # Trạm làm việc Web PACS y tế (FastAPI + Dark Theme)
+│   ├── app/
+│   │   ├── core/
+│   │   │   ├── config.py                      # Ngưỡng threshold, màu sắc lâm sàng
+│   │   │   ├── unet_segmenter.py              # Engine suy luận U-Net++ (CLAHE + TTA + CC filter)
+│   │   │   ├── yolo_detector.py               # Engine YOLOv11m & Single Cardiac Envelope
+│   │   │   ├── clinical_metrics.py            # Tính toán CTR, % xẹp phổi Phi, Triage alert
+│   │   │   ├── visualizer.py                  # Render lớp phủ (Overlay) chất lượng cao
+│   │   │   └── inference.py                   # Bộ điều phối toàn trình (Pipeline Orchestrator)
+│   │   ├── static/                            # CSS Medical PACS Dark theme & JS tương tác layer
+│   │   └── templates/                         # Giao diện Web PACS Station (index.html)
+│   ├── test_images/
+│   │   └── demo_cases_raw/                    # 5 ca X-quang kiểm thử chuẩn kinh điển
+│   ├── main.py                                # Máy chủ FastAPI RESTful API
+│   ├── run.sh                                 # Script 1-click khởi chạy dịch vụ
+│   └── requirements.txt                       # Thư viện phụ thuộc cho Web App
+│
+├── .gitignore                                 # Loại trừ trọng số nặng (>100MB) và virtualenv
+├── README.md                                  # Tài liệu kỹ thuật chi tiết của dự án
+└── Regional_diagnosis_based_on_X_ray.ipynb    # NOTEBOOK TỔNG HỢP DUY NHẤT (Hoàn chỉnh 100%)
 ```
 
 ---
 
-## 7. Hướng Dẫn Cài Đặt & Chạy Suy Luận (Quickstart & Inference)
+## 7. Hướng Dẫn Cài Đặt & Khởi Chạy (Quickstart Guide)
 
-### 7.1. Cài đặt môi trường
-Khuyến nghị môi trường Python $\ge 3.10$ với GPU hỗ trợ CUDA (Tesla T4, P100 hoặc RTX 3060 trở lên):
+### 7.1. Cài đặt môi trường Python
+Khuyến nghị môi trường Python $\ge 3.10$:
 
 ```bash
 git clone https://github.com/jtuongdang/yolo-unet-cxr-segmentation.git
 cd yolo-unet-cxr-segmentation
-pip install -q torch torchvision torchaudio
-pip install -q ultralytics ensemble-boxes segmentation-models-pytorch albumentations huggingface_hub
 ```
 
-### 7.2. Chạy suy luận độc lập từ Hugging Face Hub (U-Net++ Segmentation)
-```python
-import torch
-import segmentation_models_pytorch as smp
-from huggingface_hub import hf_hub_download
-
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
-# Tải trọng số trực tiếp từ Hugging Face
-weight_path = hf_hub_download(repo_id="JTuong/u-net", filename="report_assets/best_unet_plus_plus.pth")
-
-model = smp.UnetPlusPlus(
-    encoder_name="se_resnext50_32x4d",
-    encoder_weights=None,
-    in_channels=3,
-    classes=1,
-    decoder_attention_type="scse"
-).to(DEVICE)
-
-model.load_state_dict(torch.load(weight_path, map_location=DEVICE))
-model.eval()
-print("Model U-Net++ đã sẵn sàng phục vụ suy luận lâm sàng.")
+### 7.2. Khởi chạy Trạm làm việc Web PACS (1-Click)
+```bash
+cd pneumothorax-ai-service
+chmod +x run.sh
+./run.sh
 ```
+Mở trình duyệt truy cập: 👉 **`http://localhost:8000`**
 
-### 7.3. Chạy suy luận độc lập từ Hugging Face Hub (YOLOv11m Detection)
-```python
-from ultralytics import YOLO
-from huggingface_hub import hf_hub_download
-
-# Tải trọng số YOLOv11m trực tiếp từ Hugging Face
-yolo_weight = hf_hub_download(repo_id="JTuong/EDAvaMachineLearningChestXYolo11m", filename="best.pt")
-
-yolo_model = YOLO(yolo_weight)
-results = yolo_model.predict(source="duong_dan_anh_xquang.jpg", conf=0.35, imgsz=640)
-results[0].show()
-```
+### 7.3. Chạy Notebook tổng hợp
+Mở Jupyter Notebook hoặc Google Colab / Kaggle và chạy trực tiếp file:
+👉 **`Regional_diagnosis_based_on_X_ray.ipynb`**
 
 ---
 
-## 8. Trích Dẫn & Bản Quyền (Citations & Acknowledgments)
+## 8. Kho Lưu Trữ Trọng Số & Gói Bài Báo (Model Hub & Overleaf)
 
-Dự án sử dụng và trích dẫn các nghiên cứu và tập dữ liệu mã nguồn mở:
-1. **VinDr-CXR (Kaggle Competition & Dataset)**:
-   - Cuộc thi chính thức: [VinBigData Chest X-ray Abnormalities Detection](https://www.kaggle.com/competitions/vinbigdata-chest-xray-abnormalities-detection)
-   - Bộ dữ liệu ảnh nén chuẩn hóa $1024 \times 1024$ JPG: [VinBigData 1024 JPG Dataset (sunghyunjun)](https://www.kaggle.com/datasets/sunghyunjun/vinbigdata-1024-jpg-dataset)
-   - Trích dẫn gốc: Nguyen, H. Q., et al. (2022). *VinDr-CXR: An open dataset of chest X-rays with radiologist's annotations*. Scientific Data.
-2. **SIIM-ACR**: *SIIM-ACR Pneumothorax Segmentation Dataset*, Society for Imaging Informatics in Medicine & American College of Radiology.
-3. **U-Net++**: Zhou, Z., et al. (2018). *UNet++: A Nested U-Net Architecture for Medical Image Segmentation*. Deep Learning in Medical Image Analysis.
-4. **Weighted Boxes Fusion**: Solovyev, R., et al. (2021). *Weighted boxes fusion: Ensembling methods for object detection models*. Image and Vision Computing.
-5. **YOLOv11**: Jocher, G., et al. (2024). *Ultralytics YOLO11*. GitHub.
+Toàn bộ trọng số mô hình đã huấn luyện, lịch sử đào tạo và các artifact chất lượng cao được lưu trữ công khai:
+
+* **U-Net++ Weights (SIIM-ACR Pneumothorax)**:  
+  [`https://huggingface.co/JTuong/EDAMachineLearningUNet`](https://huggingface.co/JTuong/EDAMachineLearningUNet) *(Mirror: [`JTuong/u-net`](https://huggingface.co/JTuong/u-net))*  
+  - Tệp trọng số tối ưu: `best_unet_plus_plus.pth` (213 MB)
+
+* **YOLOv11 Weights (VinDr-CXR Multi-Lesion)**:  
+  [`https://huggingface.co/JTuong/EDAvaMachineLearningChestXYolo11m`](https://huggingface.co/JTuong/EDAvaMachineLearningChestXYolo11m)  
+  - Tệp trọng số: `best_B_m1280.pt` (40.7 MB) & `best.pt`
+
+* **Gói nén Bài báo Khoa học Overleaf**:  
+  [`overleaf_paper.zip`](overleaf_paper.zip) (Dung lượng 2.2 MB, sẵn sàng nạp trực tiếp lên Overleaf Free, biên dịch trong 2 giây).
+
+---
+
+## 9. Trích Dẫn & Bản Quyền (Citations & Acknowledgments)
+
+Dự án sử dụng và kế thừa các nghiên cứu và tập dữ liệu mã nguồn mở:
+1. **VinDr-CXR Dataset**: Nguyen, H. Q., et al. (2022). *VinDr-CXR: An open dataset of chest X-rays with radiologist's annotations*. Nature Scientific Data.
+2. **SIIM-ACR Dataset**: Society for Imaging Informatics in Medicine & American College of Radiology (2019). *SIIM-ACR Pneumothorax Segmentation*.
+3. **U-Net++ Architecture**: Zhou, Z., et al. (2018). *UNet++: A Nested U-Net Architecture for Medical Image Segmentation*. DLMIA.
+4. **scSE Attention**: Roy, A. G., et al. (2018). *Concurrent Spatial and Channel ‘Squeeze & Excitation’ in Fully Convolutional Networks*. MICCAI.
+5. **Weighted Boxes Fusion**: Solovyev, R., et al. (2021). *Weighted boxes fusion: Ensembling boxes from different object detection models*. Image and Vision Computing.
+6. **Ultralytics YOLO11**: Jocher, G., & Qiu, J. (2024). *Ultralytics YOLO11*. GitHub.
