@@ -326,72 +326,79 @@
             </div>
 
             <div class="panel-scroll-body">
-                <!-- Triage Priority Alert Card -->
-                <div class="triage-card badge-success" id="triage-banner">
-                    <div class="triage-top">
-                        <div class="triage-badge-pill" id="triage-level-pill">
-                            <span class="triage-icon" id="triage-icon">✓</span>
-                            <span class="triage-level" id="triage-title">ROUTINE</span>
-                        </div>
-                        <span class="triage-urgency" id="triage-urgency">Standard Queue</span>
+                <!-- Physician Clinical Triage Assignment (Manual Selection) -->
+                <div class="physician-triage-panel" id="triage-banner">
+                    <div class="triage-panel-header">
+                        <span class="panel-subtitle">Phân loại lâm sàng (Bác sĩ chỉ định)</span>
+                        <span class="triage-current-tag" id="triage-current-tag">Chưa phân loại</span>
                     </div>
-                    <p class="triage-desc" id="triage-summary">Analyzing radiograph...</p>
+                    <div class="triage-selector-group">
+                        <button class="triage-btn-opt" data-triage="ROUTINE" id="btn-triage-routine">
+                            <span class="triage-dot green"></span>
+                            <span>Thông thường (Routine)</span>
+                        </button>
+                        <button class="triage-btn-opt" data-triage="PRIORITY" id="btn-triage-priority">
+                            <span class="triage-dot yellow"></span>
+                            <span>Ưu tiên (Priority)</span>
+                        </button>
+                        <button class="triage-btn-opt" data-triage="EMERGENCY" id="btn-triage-emergency">
+                            <span class="triage-dot red"></span>
+                            <span>Cấp cứu (Emergency)</span>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Clinical Biomarkers Section -->
+                <!-- Clinical Biomarkers Section (Pure Numerical Measurements) -->
                 <div class="section-group">
                     <div class="section-title">
-                        <span>Quantitative Geometric Biomarkers</span>
+                        <span>Số liệu định lượng hình học (Geometric Biomarkers)</span>
                     </div>
 
                     <div class="biomarkers-grid">
                         <!-- Cardiothoracic Ratio Card -->
                         <div class="biomarker-card" id="card-ctr">
                             <div class="bio-head">
-                                <span class="bio-name">Cardiothoracic Ratio (CTR)</span>
-                                <span class="bio-badge" id="ctr-badge">Norm &lt; 0.50</span>
+                                <span class="bio-name">Chỉ số Tim - Lồng ngực (CTR)</span>
+                                <span class="bio-badge">Tỷ lệ: W_tim / W_ngực</span>
                             </div>
                             <div class="bio-value-row">
                                 <div class="bio-val" id="ctr-value">---</div>
                                 <div class="bio-scale">
                                     <div class="scale-bar">
                                         <div class="scale-fill" id="ctr-scale-fill" style="width: 0%;"></div>
-                                        <div class="scale-marker" style="left: 50%;" title="Threshold: 0.50"></div>
+                                        <div class="scale-marker" style="left: 50%;" title="Mốc tham chiếu 0.50"></div>
                                     </div>
                                     <div class="scale-labels">
                                         <span>0.3</span>
-                                        <span>0.5</span>
+                                        <span>0.5 (Tham chiếu)</span>
                                         <span>0.7+</span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="bio-verdict" id="ctr-status">Awaiting assessment</div>
+                            <div class="bio-verdict" id="ctr-status">W_tim: --- px | W_ngực: --- px</div>
                         </div>
 
                         <!-- Pleural Collapse Fraction Phi Card -->
                         <div class="biomarker-card" id="card-collapse">
                             <div class="bio-head">
-                                <span class="bio-name">Pleural Collapse (Φ)</span>
-                                <span class="bio-badge" id="collapse-badge">U-Net++ Surface</span>
+                                <span class="bio-name">Tỷ lệ diện tích Tràn khí (Φ)</span>
+                                <span class="bio-badge">U-Net++ Surface Area</span>
                             </div>
                             <div class="bio-value-row">
-                                <div class="bio-val highlight-amber" id="collapse-value">---%</div>
+                                <div class="bio-val highlight-cyan" id="collapse-value">---%</div>
                                 <div class="bio-scale">
                                     <div class="scale-bar">
-                                        <div class="scale-fill fill-amber" id="collapse-scale-fill" style="width: 0%;"></div>
-                                        <div class="scale-marker" style="left: 20%;" title="Tension Risk: 20%"></div>
+                                        <div class="scale-fill fill-cyan" id="collapse-scale-fill" style="width: 0%;"></div>
+                                        <div class="scale-marker" style="left: 50%;" title="Mốc tham chiếu 20%"></div>
                                     </div>
                                     <div class="scale-labels">
                                         <span>0%</span>
-                                        <span>10%</span>
-                                        <span>20%+</span>
+                                        <span>20% (Tham chiếu)</span>
+                                        <span>40%+</span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="bio-verdict" id="collapse-status">Visceral pleura intact</div>
-                            <div class="bio-action-pill" id="collapse-action" style="display: none;">
-                                Immediate Action: Tube Thoracostomy
-                            </div>
+                            <div class="bio-verdict" id="collapse-status">Diện tích tràn khí: 0 px | Phế trường: --- px</div>
                         </div>
                     </div>
                 </div>
@@ -410,7 +417,7 @@
                                     <th>Pathology</th>
                                     <th>Confidence</th>
                                     <th>Zone</th>
-                                    <th>Recommendation</th>
+                                    <th>Measurement / Details</th>
                                 </tr>
                             </thead>
                             <tbody id="findings-tbody">
