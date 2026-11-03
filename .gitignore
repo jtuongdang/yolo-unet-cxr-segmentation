@@ -1,5 +1,36 @@
+# Large model weights (stored on Hugging Face Hub)
 *.pt
 *.pth
+*.weights
+weights/
+**/weights/
+*.bin
+
+# Python cache & virtual environments
 __pycache__/
+**/__pycache__/
+*.pyc
 .ipynb_checkpoints/
+**/.ipynb_checkpoints/
 .cache/
+venv/
+**/venv/
+.venv/
+env/
+
+# OS artifacts
+.DS_Store
+*/.DS_Store
+**/.DS_Store
+
+# Temporary results from test runs
+results/
+**/results/
+
+# Intermediate notebooks (Only keep summary notebook Regional_diagnosis_based_on_X_ray.ipynb)
+eda-va-machine-learning-u-net.ipynb
+eda-va-machine-learning-yolo.ipynb
+eda-va-machine-learning-yolo-80plus.ipynb
+eda-va-machine-learning-yolo-twostage-80plus.ipynb
+testabtolo.ipynb
+yolo3.ipynb

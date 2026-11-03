@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PneumoAI - Multi-Modal CXR Diagnostic PACS Workstation</title>
+    <link rel="stylesheet" href="/static/css/medical_pacs.css">
+</head>
+<body>
+    <!-- Top PACS Header -->
+    <header>
+        <div class="brand">
+            <div class="brand-icon">🫁</div>
+            <div class="brand-title">
+                <h1>PneumoAI CADe/CADx Workstation</h1>
+                <p>Decoupled Lesion Delineation & Structured Reporting System</p>
+            </div>
+        </div>
+
+        <div class="system-status">
+            <div class="status-pill">
+                <span class="dot-online"></span>
+                <span>U-Net++ (scSE) : Active</span>
+            </div>
+            <div class="status-pill">
+                <span class="dot-online"></span>
+                <span>YOLOv11m @ 1280px : Active</span>
+            </div>
+            <div class="status-pill" id="latency-info" style="color: var(--cyan-accent); font-family: var(--font-mono);">
+                Pipeline Ready
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="app-container">
+        <!-- Left Panel: Input & Case Gallery -->
+        <aside class="panel">
+            <div class="panel-header">
+                <h2>1. Input Radiograph</h2>
+                <span style="font-size: 0.7rem; color: var(--text-dim);">PA / AP View</span>
+            </div>
+            <div class="panel-body">
+                <!-- Dropzone for custom upload -->
+                <div class="dropzone" id="dropzone">
+                    <div class="dropzone-icon">📁</div>
+                    <p><strong>Click or Drag CXR image here</strong></p>
+                    <span>Supports DICOM, PNG, JPG</span>
+                    <input type="file" id="file-input" accept="image/*" style="display: none;">
+                </div>
+
+                <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-dim); font-weight: 600; margin-top: 0.5rem;">
+                    Clinical Benchmark Demo Cases (1-Click)
+                </div>
+
+                <!-- Demo cases list -->
+                <div class="demo-list" id="demo-list">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Panel: Dual Viewport PACS Display -->
+        <main class="panel viewer-panel">
+            <div class="viewer-toolbar">
+                <div class="btn-group">
+                    <button class="btn active" id="btn-composite">Composite (All Layers)</button>
+                    <button class="btn" id="btn-seg">U-Net++ Pleura Only</button>
+                    <button class="btn" id="btn-det">YOLO11 Detection Only</button>
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-dim);">
+                    Window / Level: Thoracic Soft Tissue Preset
+                </div>
+            </div>
+
+            <div class="viewer-grid">
+                <!-- Viewport 1: Original Image -->
+                <div class="viewport">
+                    <div class="viewport-header" id="raw-dims">Raw Radiograph</div>
+                    <div class="viewport-img-container">
+                        <img id="raw-image" class="viewport-img" src="" alt="Raw CXR">
+                    </div>
+                </div>
+
+                <!-- Viewport 2: AI Overlay -->
+                <div class="viewport">
+                    <div class="viewport-header" id="ai-layer-tag">AI Diagnostic Overlay</div>
+                    <div class="viewport-img-container">
+                        <img id="ai-image" class="viewport-img" src="" alt="AI Diagnosis">
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Panel: Quantitative Biomarkers & Report -->
+        <aside class="panel">
+            <div class="panel-header">
+                <h2>2. Diagnostic Report</h2>
+                <span style="font-size: 0.7rem; color: var(--cyan-accent); font-family: var(--font-mono);">RadLex Standard</span>
+            </div>
+            <div class="panel-body">
+                <!-- Triage Priority Alert -->
+                <div class="triage-banner badge-success" id="triage-banner">
+                    <div class="triage-icon" id="triage-icon">✅</div>
+                    <div class="triage-info">
+                        <h3 id="triage-title">ROUTINE</h3>
+                        <p id="triage-summary">Evaluating radiograph...</p>
+                    </div>
+                </div>
+
+                <!-- Quantitative Geometric Biomarkers -->
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">Cardiothoracic Ratio</div>
+                        <div class="metric-val" id="ctr-value">---</div>
+                        <div class="metric-status" id="ctr-status">Threshold: 0.50</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Pleural Collapse (Φ)</div>
+                        <div class="metric-val" id="collapse-value">---%</div>
+                        <div class="metric-status" id="collapse-status">U-Net++ Surface</div>
+                    </div>
+                </div>
+
+                <!-- Localized Pathologies Table -->
+                <div>
+                    <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-dim); font-weight: 600; margin-bottom: 0.4rem;">
+                        Consensus Lesion Findings
+                    </div>
+                    <table class="findings-table">
+                        <thead>
+                            <tr>
+                                <th>Pathology</th>
+                                <th>Confidence</th>
+                                <th>Location</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="findings-tbody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- RadLex Impression Summary -->
+                <div>
+                    <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-dim); font-weight: 600; margin-bottom: 0.4rem;">
+                        Automated Radiological Impression
+                    </div>
+                    <div class="impression-box" id="impression-text">
+                        Awaiting exam analysis...
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <div style="font-size: 0.85rem; color: var(--text-main); font-weight: 600;">
+            Executing Dual-Model Inference (U-Net++ & YOLO11)...
+        </div>
+        <div style="font-size: 0.72rem; color: var(--cyan-accent);">
+            Running CLAHE + TTA + Single Cardiac Envelope Consolidation
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
