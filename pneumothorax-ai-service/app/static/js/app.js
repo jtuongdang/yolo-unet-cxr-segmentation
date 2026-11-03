@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
         currentLayer: "composite", // composite | seg | det
         currentLayout: "dual",     // dual | split | single
         currentPreset: "default",  // default | lung | invert | sharpen
+        physicianTriage: "UNASSIGNED", // UNASSIGNED | ROUTINE | PRIORITY | EMERGENCY
         zoom: 1.0,
         pan: { x: 0, y: 0 },
         isPanning: false,
@@ -229,68 +230,50 @@ document.addEventListener("DOMContentLoaded", () => {
         splitRawImage.src = report.artifacts.raw_url;
         updateAILayerView(state.currentLayer);
 
-        // 3. Triage Alert Card
-        const alertInfo = report.triage_alert;
-        triageBanner.className = `triage-card ${alertInfo.badge_class}`;
-        triageTitle.textContent = alertInfo.level;
-        triageSummary.textContent = alertInfo.summary;
+        // 3. Physician Triage Assignment (Reset on new exam)
+        state.physicianTriage = "UNASSIGNED";
+        updatePhysicianTriageUI("UNASSIGNED");
 
-        if (alertInfo.level === "EMERGENCY") {
-            triageIcon.textContent = "🚨";
-            triageUrgency.textContent = "IMMEDIATE ATTENTION";
-        } else if (alertInfo.level === "PRIORITY") {
-            triageIcon.textContent = "⚠️";
-            triageUrgency.textContent = "ELEVATED PRIORITY";
-        } else {
-            triageIcon.textContent = "✓";
-            triageUrgency.textContent = "ROUTINE CLINICAL QUEUE";
-        }
-
-        // 4. Cardiothoracic Ratio (CTR)
+        // 4. Cardiothoracic Ratio (CTR) - Pure Numerical Measurement
         const ctr = report.biomarkers.cardiothoracic_ratio;
         if (ctr && ctr.ctr_value !== null) {
-            ctrValue.textContent = ctr.ctr_value.toFixed(2);
-            ctrStatus.textContent = ctr.status;
-            // Map 0.3 -> 0%, 0.7 -> 100%
+            ctrValue.textContent = ctr.ctr_value.toFixed(3);
+            ctrStatus.textContent = `W_tim: ${ctr.heart_width_px} px | W_ngực: ${ctr.thorax_width_px} px`;
+            // Reference fill scale (0.3 -> 0%, 0.7 -> 100%)
             const pct = Math.min(100, Math.max(0, ((ctr.ctr_value - 0.3) / 0.4) * 100));
             ctrScaleFill.style.width = `${pct}%`;
-            ctrScaleFill.className = ctr.is_enlarged ? "scale-fill fill-amber" : "scale-fill";
+            ctrScaleFill.className = "scale-fill";
         } else {
             ctrValue.textContent = "---";
-            ctrStatus.textContent = "Normal / Within Limits";
-            ctrScaleFill.style.width = "40%";
+            ctrStatus.textContent = "Bóng tim không xác định được bờ rõ rệt";
+            ctrScaleFill.style.width = "0%";
             ctrScaleFill.className = "scale-fill";
         }
 
-        // 5. Pleural Collapse (Phi)
+        // 5. Pleural Surface Fraction (Phi) - Pure Numerical Measurement
         const ptx = report.biomarkers.pleural_collapse;
         collapseValue.textContent = `${ptx.collapse_percentage}%`;
-        collapseStatus.textContent = ptx.severity;
-        const collapsePct = Math.min(100, (ptx.collapse_percentage / 30.0) * 100);
+        const ptxPx = ptx.ptx_pixels || 0;
+        const lungPx = ptx.estimated_hemithorax_px || 0;
+        collapseStatus.textContent = `Tràn khí: ${ptxPx.toLocaleString()} px | Phế trường: ${lungPx.toLocaleString()} px`;
+        const collapsePct = Math.min(100, (ptx.collapse_percentage / 40.0) * 100);
         collapseScaleFill.style.width = `${collapsePct}%`;
 
-        if (ptx.detected && ptx.intervention_recommended) {
-            collapseAction.style.display = "block";
-            collapseAction.textContent = `Action: ${ptx.intervention_recommended}`;
-        } else {
-            collapseAction.style.display = "none";
-        }
-
-        // 6. Findings Table
+        // 6. Findings Table - Objective Geometric Delineations
         findingsTableBody.innerHTML = "";
         const localized = report.findings.localized_lesions;
         let totalCount = localized.length + (ptx.detected ? 1 : 0);
         lesionsCount.textContent = `${totalCount} item${totalCount !== 1 ? "s" : ""}`;
-        aiDetectionCount.textContent = `${totalCount} Lesions Delineated`;
+        aiDetectionCount.textContent = `${totalCount} Vùng nghi ngờ`;
 
         // If Pneumothorax detected, add as first row
         if (ptx.detected) {
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td><span class="path-badge" style="background: rgba(0, 255, 127, 0.18); color: #00ff7f; border: 1px solid rgba(0, 255, 127, 0.4);">Pneumothorax</span></td>
+                <td><span class="path-badge" style="background: rgba(0, 255, 127, 0.18); color: #00ff7f; border: 1px solid rgba(0, 255, 127, 0.4);">Tràn khí (Pneumothorax)</span></td>
                 <td><strong style="color: #00ff7f;">${(ptx.confidence_mean * 100).toFixed(1)}%</strong></td>
-                <td>Visceral Pleura</td>
-                <td>${ptx.intervention_recommended}</td>
+                <td>Lá tạng màng phổi</td>
+                <td>Diện tích: ${ptxPx.toLocaleString()} px² (~${ptx.collapse_percentage}% phế trường)</td>
             `;
             findingsTableBody.appendChild(tr);
         }
@@ -316,18 +299,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 borderColor = "rgba(168, 85, 247, 0.3)";
             }
 
+            const boxStr = det.box ? `Hộp tọa độ: [${det.box[0]}, ${det.box[1]} - ${det.box[2]}, ${det.box[3]}]` : "Đã định vị";
             tr.innerHTML = `
                 <td><span class="path-badge" style="background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${borderColor};">${det.class_name}</span></td>
                 <td>${(det.confidence * 100).toFixed(1)}%</td>
                 <td>${det.lung_zone}</td>
-                <td>Radiological Correlation</td>
+                <td>${boxStr}</td>
             `;
             findingsTableBody.appendChild(tr);
         });
 
         if (totalCount === 0) {
             const tr = document.createElement("tr");
-            tr.innerHTML = `<td colspan="4" style="text-align: center; color: var(--text-dim); padding: 1.25rem;">No acute focal lesions or pleural detachment detected.</td>`;
+            tr.innerHTML = `<td colspan="4" style="text-align: center; color: var(--text-dim); padding: 1.25rem;">Không ghi nhận tổn thương khu trú hoặc bóc tách màng phổi.</td>`;
             findingsTableBody.appendChild(tr);
         }
 
@@ -335,39 +319,87 @@ document.addEventListener("DOMContentLoaded", () => {
         generateImpression(report);
     }
 
+    // --- Physician Manual Triage Selector Logic ---
+    const triageCurrentTag = document.getElementById("triage-current-tag");
+    const btnTriageRoutine = document.getElementById("btn-triage-routine");
+    const btnTriagePriority = document.getElementById("btn-triage-priority");
+    const btnTriageEmergency = document.getElementById("btn-triage-emergency");
+
+    function updatePhysicianTriageUI(level) {
+        state.physicianTriage = level;
+        [btnTriageRoutine, btnTriagePriority, btnTriageEmergency].forEach(btn => {
+            if (!btn) return;
+            btn.classList.toggle("active", btn.dataset.triage === level);
+        });
+
+        if (!triageCurrentTag) return;
+        triageCurrentTag.className = "triage-current-tag";
+
+        if (level === "ROUTINE") {
+            triageCurrentTag.textContent = "Thông thường (Routine)";
+            triageCurrentTag.classList.add("routine");
+        } else if (level === "PRIORITY") {
+            triageCurrentTag.textContent = "Ưu tiên (Priority)";
+            triageCurrentTag.classList.add("priority");
+        } else if (level === "EMERGENCY") {
+            triageCurrentTag.textContent = "Cấp cứu (Emergency)";
+            triageCurrentTag.classList.add("emergency");
+        } else {
+            triageCurrentTag.textContent = "Chưa phân loại";
+        }
+
+        if (state.currentReport) {
+            generateImpression(state.currentReport);
+        }
+    }
+
+    [btnTriageRoutine, btnTriagePriority, btnTriageEmergency].forEach(btn => {
+        if (!btn) return;
+        btn.addEventListener("click", () => {
+            const selectedLevel = btn.dataset.triage;
+            updatePhysicianTriageUI(selectedLevel);
+            showToast(`Bác sĩ đã gán cảnh báo: ${selectedLevel}`);
+        });
+    });
+
     function generateImpression(report) {
         const ptx = report.findings.pneumothorax_segmentation;
         const ctr = report.biomarkers.cardiothoracic_ratio;
         const lesions = report.findings.localized_lesions;
 
+        let triageLabel = "CHƯA PHÂN LOẠI (Bác sĩ chưa chọn)";
+        if (state.physicianTriage === "ROUTINE") triageLabel = "THÔNG THƯỜNG (ROUTINE) - Bác sĩ chỉ định";
+        else if (state.physicianTriage === "PRIORITY") triageLabel = "ƯU TIÊN (PRIORITY) - Bác sĩ chỉ định";
+        else if (state.physicianTriage === "EMERGENCY") triageLabel = "CẤP CỨU (EMERGENCY) - Bác sĩ chỉ định";
+
         let lines = [];
-        lines.push(`EXAMINATION: CHEST RADIOGRAPH (PA VIEW)`);
-        lines.push(`ACCESSION / EXAM ID: ${report.exam_id}`);
-        lines.push(`TRIAGE PRIORITY: [${report.triage_alert.level}]`);
+        lines.push(`BIÊN BẢN ĐO ĐẠC HÌNH ẢNH X-QUANG NGỰC (PA VIEW)`);
+        lines.push(`MÃ CA KHÁM: ${report.exam_id}`);
+        lines.push(`PHÂN TẦNG LÂM SÀNG: [${triageLabel}]`);
         lines.push(`----------------------------------------------------------------`);
-        lines.push(`FINDINGS:`);
+        lines.push(`SỐ LIỆU ĐO ĐẠC KHÁCH QUAN TỪ MÔ HÌNH:`);
 
         if (ptx.detected) {
-            lines.push(`• PLEURA & THORACIC CAGE: Pneumothorax confirmed by visceral pleural line delineation. Ipsilateral lung collapse quantified at ${ptx.collapse_percentage}% (${ptx.severity}). Recommended: ${ptx.intervention_recommended}.`);
+            lines.push(`• MÀNG PHỔI & THÀNH NGỰC: Ghi nhận viền lá tạng màng phổi bóc tách. Diện tích đo đạc: ${ptx.ptx_pixels.toLocaleString()} px² (~${ptx.collapse_percentage}% thể tích phế trường cùng bên).`);
         } else {
-            lines.push(`• PLEURA & THORACIC CAGE: No pneumothorax, effusion, or apical pleural line detachment.`);
+            lines.push(`• MÀNG PHỔI & THÀNH NGỰC: Không ghi nhận hình ảnh bóc tách lá tạng màng phổi.`);
         }
 
         if (ctr && ctr.ctr_value) {
-            lines.push(`• CARDIOMEDIASTINAL SILHOUETTE: CTR = ${ctr.ctr_value.toFixed(2)} (${ctr.status}).`);
+            lines.push(`• CHỈ SỐ TIM - LỒNG NGỰC: CTR = ${ctr.ctr_value.toFixed(3)} (W_tim: ${ctr.heart_width_px} px, W_ngực: ${ctr.thorax_width_px} px).`);
         } else {
-            lines.push(`• CARDIOMEDIASTINAL SILHOUETTE: Cardiothoracic ratio within normal physiological limits.`);
+            lines.push(`• CHỈ SỐ TIM - LỒNG NGỰC: Bờ bóng tim không hiển thị bất thường khu trú.`);
         }
 
         if (lesions.length > 0) {
             const nonCardiac = lesions.filter(l => !l.class_name.includes("Cardiomegaly"));
             if (nonCardiac.length > 0) {
-                const listStr = nonCardiac.map(l => `${l.class_name} localized in ${l.lung_zone} (conf: ${l.confidence})`).join("; ");
-                lines.push(`• PULMONARY PARENCHYMA: ${listStr}.`);
+                const listStr = nonCardiac.map(l => `${l.class_name} tại vùng ${l.lung_zone} (conf: ${(l.confidence * 100).toFixed(1)}%)`).join("; ");
+                lines.push(`• NHU MÔ PHỔI & TRUNG THẤT: ${listStr}.`);
             }
         }
 
-        lines.push(`\nIMPRESSION: Automated consensus synthesis formatted in accordance with RadLex standard terminology.`);
+        lines.push(`\nKẾT LUẬN: Báo cáo cung cấp các số đo hình học và vùng nghi ngờ do AI phân tích. Bác sĩ lâm sàng tự đối chiếu và quyết định chẩn đoán cuối cùng.`);
         impressionText.textContent = lines.join("\n");
     }
 
