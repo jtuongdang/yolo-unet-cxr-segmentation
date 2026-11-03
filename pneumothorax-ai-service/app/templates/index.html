@@ -4,165 +4,473 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PneumoAI - Multi-Modal CXR Diagnostic PACS Workstation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/medical_pacs.css">
 </head>
 <body>
     <!-- Top PACS Header -->
-    <header>
-        <div class="brand">
-            <div class="brand-icon">🫁</div>
-            <div class="brand-title">
-                <h1>PneumoAI CADe/CADx Workstation</h1>
-                <p>Decoupled Lesion Delineation & Structured Reporting System</p>
+    <header class="pacs-header">
+        <div class="header-left">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 4v16m-4-8h8m-8-5a4 4 0 0 0-4 4v5a4 4 0 0 0 4 4h1m6 0h1a4 4 0 0 0 4-4v-5a4 4 0 0 0-4-4"/>
+                    </svg>
+                </div>
+                <div class="brand-title">
+                    <div class="brand-name">
+                        <span>PneumoAI</span>
+                        <span class="badge-version">v2.5 Pro PACS</span>
+                    </div>
+                    <p class="brand-sub">Multi-Modal Thoracic Radiograph CADe/CADx Workstation</p>
+                </div>
+            </div>
+
+            <!-- Patient / Study Metadata Bar -->
+            <div class="study-meta-pill" id="study-meta">
+                <div class="meta-item">
+                    <span class="meta-label">EXAM ID</span>
+                    <span class="meta-val" id="meta-exam-id">EXAM-READY</span>
+                </div>
+                <div class="meta-divider"></div>
+                <div class="meta-item">
+                    <span class="meta-label">VIEW</span>
+                    <span class="meta-val">PA Chest CXR</span>
+                </div>
+                <div class="meta-divider"></div>
+                <div class="meta-item">
+                    <span class="meta-label">RESOLUTION</span>
+                    <span class="meta-val" id="meta-dims">--- x ---</span>
+                </div>
             </div>
         </div>
 
-        <div class="system-status">
-            <div class="status-pill">
-                <span class="dot-online"></span>
-                <span>U-Net++ (scSE) : Active</span>
+        <div class="header-right">
+            <!-- AI Engine Pipeline Status -->
+            <div class="engine-cluster">
+                <div class="engine-badge" title="U-Net++ SE-ResNeXt-50 with scSE Dual Attention for Pneumothorax">
+                    <span class="status-dot pulse-emerald"></span>
+                    <span class="engine-name">U-Net++ (scSE)</span>
+                    <span class="engine-task">Segmentation</span>
+                </div>
+                <div class="engine-badge" title="YOLOv11m @ 1280px for Multi-Lesion Consensus">
+                    <span class="status-dot pulse-cyan"></span>
+                    <span class="engine-name">YOLOv11m</span>
+                    <span class="engine-task">1280px Det</span>
+                </div>
             </div>
-            <div class="status-pill">
-                <span class="dot-online"></span>
-                <span>YOLOv11m @ 1280px : Active</span>
+
+            <!-- Pipeline Latency Display -->
+            <div class="latency-chip" id="latency-chip" title="Total Roundtrip Model Latency">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span id="latency-text">Pipeline Standby</span>
             </div>
-            <div class="status-pill" id="latency-info" style="color: var(--cyan-accent); font-family: var(--font-mono);">
-                Pipeline Ready
+
+            <!-- Header Action Tools -->
+            <div class="header-tools">
+                <button class="tool-icon-btn" id="btn-shortcuts" title="Keyboard Shortcuts Help (Ctrl+/)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                </button>
+                <button class="tool-icon-btn" id="btn-fullscreen" title="Toggle Fullscreen Mode">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                    </svg>
+                </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Workspace -->
-    <div class="app-container">
-        <!-- Left Panel: Input & Case Gallery -->
-        <aside class="panel">
-            <div class="panel-header">
-                <h2>1. Input Radiograph</h2>
-                <span style="font-size: 0.7rem; color: var(--text-dim);">PA / AP View</span>
+    <!-- Main PACS Workspace Grid -->
+    <div class="workspace-grid">
+        <!-- 1. LEFT PANEL: Case Navigator & Radiograph Upload -->
+        <aside class="panel panel-navigator">
+            <div class="panel-head">
+                <div class="head-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>
+                    </svg>
+                    <span>CXR Cases</span>
+                </div>
+                <span class="head-badge" id="demo-count-badge">5 Benchmark</span>
             </div>
-            <div class="panel-body">
-                <!-- Dropzone for custom upload -->
-                <div class="dropzone" id="dropzone">
-                    <div class="dropzone-icon">📁</div>
-                    <p><strong>Click or Drag CXR image here</strong></p>
-                    <span>Supports DICOM, PNG, JPG</span>
-                    <input type="file" id="file-input" accept="image/*" style="display: none;">
+
+            <div class="panel-scroll-body">
+                <!-- Dropzone Section -->
+                <div class="dropzone-wrapper">
+                    <div class="dropzone" id="dropzone">
+                        <div class="dropzone-glow"></div>
+                        <div class="dropzone-content">
+                            <div class="dropzone-icon-circle">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                                </svg>
+                            </div>
+                            <div class="dropzone-text">
+                                <p class="dropzone-main">Drop X-ray DICOM / PNG</p>
+                                <span class="dropzone-sub">or click to browse local files</span>
+                            </div>
+                        </div>
+                        <input type="file" id="file-input" accept="image/*" style="display: none;">
+                    </div>
                 </div>
 
-                <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-dim); font-weight: 600; margin-top: 0.5rem;">
-                    Clinical Benchmark Demo Cases (1-Click)
+                <!-- Case Gallery Filter Bar -->
+                <div class="gallery-section-header">
+                    <span>Clinical Benchmarks</span>
+                    <span class="gallery-hint">1-Click Diagnosis</span>
                 </div>
 
-                <!-- Demo cases list -->
+                <!-- Demo Case List -->
                 <div class="demo-list" id="demo-list">
                     <!-- Populated dynamically via JS -->
+                    <div class="demo-card skeleton-card"></div>
+                    <div class="demo-card skeleton-card"></div>
+                    <div class="demo-card skeleton-card"></div>
                 </div>
             </div>
         </aside>
 
-        <!-- Center Panel: Dual Viewport PACS Display -->
-        <main class="panel viewer-panel">
-            <div class="viewer-toolbar">
-                <div class="btn-group">
-                    <button class="btn active" id="btn-composite">Composite (All Layers)</button>
-                    <button class="btn" id="btn-seg">U-Net++ Pleura Only</button>
-                    <button class="btn" id="btn-det">YOLO11 Detection Only</button>
+        <!-- 2. CENTER PANEL: PACS Viewport & Diagnostic Canvas -->
+        <main class="panel panel-viewport-workstation">
+            <!-- PACS Inspection Toolbar -->
+            <div class="pacs-toolbar">
+                <div class="toolbar-left">
+                    <!-- Layout Mode Selector -->
+                    <div class="btn-segmented" id="view-mode-selector">
+                        <button class="segmented-item active" data-view="dual" title="Dual Viewports Side-by-Side">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="8" height="18" rx="1"/><rect x="13" y="3" width="8" height="18" rx="1"/>
+                            </svg>
+                            <span>Dual View</span>
+                        </button>
+                        <button class="segmented-item" data-view="split" title="Interactive Curtain Split-Slider Before/After">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/><polyline points="8 10 6 12 8 14"/><polyline points="16 10 18 12 16 14"/>
+                            </svg>
+                            <span>Curtain Slider</span>
+                        </button>
+                        <button class="segmented-item" data-view="single" title="Focus AI Overlay Single View">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            </svg>
+                            <span>AI Focus</span>
+                        </button>
+                    </div>
+
+                    <!-- AI Layers -->
+                    <div class="btn-segmented" id="layer-selector">
+                        <button class="segmented-item active" id="btn-composite" data-layer="composite">
+                            <span>Composite</span>
+                        </button>
+                        <button class="segmented-item" id="btn-seg" data-layer="seg">
+                            <span class="dot-seg"></span>
+                            <span>Pleura Mask</span>
+                        </button>
+                        <button class="segmented-item" id="btn-det" data-layer="det">
+                            <span class="dot-det"></span>
+                            <span>YOLO Boxes</span>
+                        </button>
+                    </div>
                 </div>
-                <div style="font-size: 0.72rem; color: var(--text-dim);">
-                    Window / Level: Thoracic Soft Tissue Preset
+
+                <div class="toolbar-right">
+                    <!-- Image Inspection Presets -->
+                    <div class="inspection-tools">
+                        <!-- Window/Level Filter Presets -->
+                        <div class="preset-dropdown">
+                            <button class="tool-btn" id="btn-window-preset" title="Window/Level Contrast Presets">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20z"/>
+                                </svg>
+                                <span id="current-preset-label">Standard W/L</span>
+                            </button>
+                            <div class="preset-menu" id="preset-menu">
+                                <div class="preset-opt active" data-preset="default">Standard Thoracic</div>
+                                <div class="preset-opt" data-preset="lung">High-Contrast Lung Window</div>
+                                <div class="preset-opt" data-preset="invert">Invert / Negative Film (Soi khí)</div>
+                                <div class="preset-opt" data-preset="sharpen">Edge Enhanced</div>
+                            </div>
+                        </div>
+
+                        <!-- Zoom Controls -->
+                        <div class="zoom-controls">
+                            <button class="tool-icon-btn small" id="btn-zoom-out" title="Zoom Out (-)">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/>
+                                </svg>
+                            </button>
+                            <span class="zoom-level" id="zoom-level-text">100%</span>
+                            <button class="tool-icon-btn small" id="btn-zoom-in" title="Zoom In (+)">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+                                </svg>
+                            </button>
+                            <button class="tool-icon-btn small" id="btn-zoom-reset" title="Reset View (R)">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="viewer-grid">
-                <!-- Viewport 1: Original Image -->
-                <div class="viewport">
-                    <div class="viewport-header" id="raw-dims">Raw Radiograph</div>
-                    <div class="viewport-img-container">
-                        <img id="raw-image" class="viewport-img" src="" alt="Raw CXR">
+            <!-- Viewport Stage -->
+            <div class="viewport-stage" id="viewport-stage">
+                <!-- DUAL VIEWPORT MODE -->
+                <div class="dual-viewport-container" id="dual-container">
+                    <!-- Left: Raw Original Image -->
+                    <div class="pacs-viewport" id="viewport-raw">
+                        <div class="viewport-corner-tag top-left">
+                            <span class="tag-title">RAW RADIOGRAPH</span>
+                            <span class="tag-sub" id="raw-info-tag">Original Unprocessed CXR</span>
+                        </div>
+                        <div class="viewport-corner-tag top-right">
+                            <span class="pacs-anatomy-tag">PA UPRIGHT</span>
+                        </div>
+                        <div class="viewport-corner-tag bottom-left">
+                            <span class="pacs-meta-stamp">W: 2048 / L: 1024</span>
+                        </div>
+                        <div class="viewport-canvas-wrapper" id="raw-canvas-wrapper">
+                            <img id="raw-image" class="viewport-img" src="" alt="Raw CXR Radiograph">
+                        </div>
+                    </div>
+
+                    <!-- Right: AI Diagnostic Layer -->
+                    <div class="pacs-viewport" id="viewport-ai">
+                        <div class="viewport-corner-tag top-left">
+                            <span class="tag-title highlight-cyan">AI DIAGNOSTIC OVERLAY</span>
+                            <span class="tag-sub" id="ai-layer-tag">Dual-Model Consensus</span>
+                        </div>
+                        <div class="viewport-corner-tag top-right">
+                            <span class="tag-status-pill" id="ai-status-pill">CADe Active</span>
+                        </div>
+                        <div class="viewport-corner-tag bottom-left">
+                            <span class="pacs-meta-stamp" id="ai-detection-count">0 Lesions Detected</span>
+                        </div>
+                        <div class="viewport-canvas-wrapper" id="ai-canvas-wrapper">
+                            <img id="ai-image" class="viewport-img" src="" alt="AI CADe Diagnosis Overlay">
+                        </div>
                     </div>
                 </div>
 
-                <!-- Viewport 2: AI Overlay -->
-                <div class="viewport">
-                    <div class="viewport-header" id="ai-layer-tag">AI Diagnostic Overlay</div>
-                    <div class="viewport-img-container">
-                        <img id="ai-image" class="viewport-img" src="" alt="AI Diagnosis">
+                <!-- SPLIT CURTAIN COMPARISON SLIDER MODE (Hidden by default) -->
+                <div class="split-viewport-container" id="split-container" style="display: none;">
+                    <div class="split-image-wrapper">
+                        <!-- Background: Raw Image -->
+                        <img id="split-raw-image" class="split-img" src="" alt="Raw CXR">
+                        
+                        <!-- Foreground: AI Overlay Clipped by Slider -->
+                        <div class="split-overlay-clip" id="split-overlay-clip">
+                            <img id="split-ai-image" class="split-img" src="" alt="AI CXR Overlay">
+                            <div class="split-badge split-badge-right">AI Overlay</div>
+                        </div>
+
+                        <div class="split-badge split-badge-left">Raw Radiograph</div>
+
+                        <!-- Draggable Divider Line -->
+                        <div class="split-divider" id="split-divider">
+                            <div class="split-handle">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="15 18 9 12 15 6"/>
+                                    <polyline points="9 18 15 12 9 6"/>
+                                </svg>
+                            </div>
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Viewport Bottom Status Bar -->
+            <div class="viewport-footer">
+                <div class="footer-hint">
+                    <span class="kbd-hint"><kbd>Scroll</kbd> Zoom</span>
+                    <span class="kbd-hint"><kbd>Drag</kbd> Pan</span>
+                    <span class="kbd-hint"><kbd>1-3</kbd> Layer toggle</span>
+                    <span class="kbd-hint"><kbd>I</kbd> Invert</span>
+                    <span class="kbd-hint"><kbd>R</kbd> Reset</span>
+                </div>
+                <div class="footer-status" id="footer-status-text">
+                    PACS Station 2.0 • System Calibrated
                 </div>
             </div>
         </main>
 
-        <!-- Right Panel: Quantitative Biomarkers & Report -->
-        <aside class="panel">
-            <div class="panel-header">
-                <h2>2. Diagnostic Report</h2>
-                <span style="font-size: 0.7rem; color: var(--cyan-accent); font-family: var(--font-mono);">RadLex Standard</span>
+        <!-- 3. RIGHT PANEL: Biomarkers & RadLex Diagnostic Report -->
+        <aside class="panel panel-report">
+            <div class="panel-head">
+                <div class="head-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    <span>Diagnostic Report</span>
+                </div>
+                <div class="head-actions">
+                    <button class="tool-icon-btn small" id="btn-copy-report" title="Copy RadLex Report to Clipboard">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                    </button>
+                    <button class="tool-icon-btn small" id="btn-print-report" title="Print / Export PDF">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <div class="panel-body">
-                <!-- Triage Priority Alert -->
-                <div class="triage-banner badge-success" id="triage-banner">
-                    <div class="triage-icon" id="triage-icon">✅</div>
-                    <div class="triage-info">
-                        <h3 id="triage-title">ROUTINE</h3>
-                        <p id="triage-summary">Evaluating radiograph...</p>
+
+            <div class="panel-scroll-body">
+                <!-- Triage Priority Alert Card -->
+                <div class="triage-card badge-success" id="triage-banner">
+                    <div class="triage-top">
+                        <div class="triage-badge-pill" id="triage-level-pill">
+                            <span class="triage-icon" id="triage-icon">✓</span>
+                            <span class="triage-level" id="triage-title">ROUTINE</span>
+                        </div>
+                        <span class="triage-urgency" id="triage-urgency">Standard Queue</span>
+                    </div>
+                    <p class="triage-desc" id="triage-summary">Analyzing radiograph...</p>
+                </div>
+
+                <!-- Clinical Biomarkers Section -->
+                <div class="section-group">
+                    <div class="section-title">
+                        <span>Quantitative Geometric Biomarkers</span>
+                    </div>
+
+                    <div class="biomarkers-grid">
+                        <!-- Cardiothoracic Ratio Card -->
+                        <div class="biomarker-card" id="card-ctr">
+                            <div class="bio-head">
+                                <span class="bio-name">Cardiothoracic Ratio (CTR)</span>
+                                <span class="bio-badge" id="ctr-badge">Norm &lt; 0.50</span>
+                            </div>
+                            <div class="bio-value-row">
+                                <div class="bio-val" id="ctr-value">---</div>
+                                <div class="bio-scale">
+                                    <div class="scale-bar">
+                                        <div class="scale-fill" id="ctr-scale-fill" style="width: 0%;"></div>
+                                        <div class="scale-marker" style="left: 50%;" title="Threshold: 0.50"></div>
+                                    </div>
+                                    <div class="scale-labels">
+                                        <span>0.3</span>
+                                        <span>0.5</span>
+                                        <span>0.7+</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bio-verdict" id="ctr-status">Awaiting assessment</div>
+                        </div>
+
+                        <!-- Pleural Collapse Fraction Phi Card -->
+                        <div class="biomarker-card" id="card-collapse">
+                            <div class="bio-head">
+                                <span class="bio-name">Pleural Collapse (Φ)</span>
+                                <span class="bio-badge" id="collapse-badge">U-Net++ Surface</span>
+                            </div>
+                            <div class="bio-value-row">
+                                <div class="bio-val highlight-amber" id="collapse-value">---%</div>
+                                <div class="bio-scale">
+                                    <div class="scale-bar">
+                                        <div class="scale-fill fill-amber" id="collapse-scale-fill" style="width: 0%;"></div>
+                                        <div class="scale-marker" style="left: 20%;" title="Tension Risk: 20%"></div>
+                                    </div>
+                                    <div class="scale-labels">
+                                        <span>0%</span>
+                                        <span>10%</span>
+                                        <span>20%+</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bio-verdict" id="collapse-status">Visceral pleura intact</div>
+                            <div class="bio-action-pill" id="collapse-action" style="display: none;">
+                                Immediate Action: Tube Thoracostomy
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Quantitative Geometric Biomarkers -->
-                <div class="metrics-grid">
-                    <div class="metric-box">
-                        <div class="metric-label">Cardiothoracic Ratio</div>
-                        <div class="metric-val" id="ctr-value">---</div>
-                        <div class="metric-status" id="ctr-status">Threshold: 0.50</div>
+                <!-- Consensus Lesion Findings Table -->
+                <div class="section-group">
+                    <div class="section-title">
+                        <span>Consensus Lesion Findings</span>
+                        <span class="section-count" id="lesions-count">0 items</span>
                     </div>
-                    <div class="metric-box">
-                        <div class="metric-label">Pleural Collapse (Φ)</div>
-                        <div class="metric-val" id="collapse-value">---%</div>
-                        <div class="metric-status" id="collapse-status">U-Net++ Surface</div>
+
+                    <div class="table-container">
+                        <table class="findings-table">
+                            <thead>
+                                <tr>
+                                    <th>Pathology</th>
+                                    <th>Confidence</th>
+                                    <th>Zone</th>
+                                    <th>Recommendation</th>
+                                </tr>
+                            </thead>
+                            <tbody id="findings-tbody">
+                                <!-- Injected dynamically -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <!-- Localized Pathologies Table -->
-                <div>
-                    <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-dim); font-weight: 600; margin-bottom: 0.4rem;">
-                        Consensus Lesion Findings
+                <!-- RadLex Structured Medical Impression -->
+                <div class="section-group">
+                    <div class="section-title">
+                        <span>RadLex Standard Impression</span>
+                        <span class="section-badge">Auto-Generated</span>
                     </div>
-                    <table class="findings-table">
-                        <thead>
-                            <tr>
-                                <th>Pathology</th>
-                                <th>Confidence</th>
-                                <th>Location</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="findings-tbody">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- RadLex Impression Summary -->
-                <div>
-                    <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-dim); font-weight: 600; margin-bottom: 0.4rem;">
-                        Automated Radiological Impression
-                    </div>
-                    <div class="impression-box" id="impression-text">
-                        Awaiting exam analysis...
+                    <div class="impression-container">
+                        <pre class="impression-box" id="impression-text">Awaiting exam analysis...</pre>
                     </div>
                 </div>
             </div>
         </aside>
     </div>
 
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loading-overlay">
-        <div class="spinner"></div>
-        <div style="font-size: 0.85rem; color: var(--text-main); font-weight: 600;">
-            Executing Dual-Model Inference (U-Net++ & YOLO11)...
+    <!-- Shortcuts Modal Help -->
+    <div class="modal-backdrop" id="shortcuts-modal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-head">
+                <h3>PACS Workstation Keyboard Shortcuts</h3>
+                <button class="modal-close" id="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcut-row"><kbd>1</kbd><span>Switch to Composite Layer (All Overlays)</span></div>
+                <div class="shortcut-row"><kbd>2</kbd><span>Switch to U-Net++ Pleural Mask Only</span></div>
+                <div class="shortcut-row"><kbd>3</kbd><span>Switch to YOLOv11m Detection Boxes Only</span></div>
+                <div class="shortcut-row"><kbd>D</kbd><span>Toggle Dual Viewport Mode</span></div>
+                <div class="shortcut-row"><kbd>S</kbd><span>Toggle Curtain Split-Slider Mode</span></div>
+                <div class="shortcut-row"><kbd>I</kbd><span>Invert Film (Negative / Positive)</span></div>
+                <div class="shortcut-row"><kbd>R</kbd><span>Reset Zoom & Pan to Fit</span></div>
+                <div class="shortcut-row"><kbd>+</kbd> / <kbd>-</kbd><span>Zoom In / Out</span></div>
+            </div>
         </div>
-        <div style="font-size: 0.72rem; color: var(--cyan-accent);">
-            Running CLAHE + TTA + Single Cardiac Envelope Consolidation
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Loading Holographic HUD Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-hud">
+            <div class="pulse-scanner-ring"></div>
+            <div class="hud-center-icon">🫁</div>
+        </div>
+        <div class="loading-text-group">
+            <div class="loading-title">Analyzing Thoracic Radiograph</div>
+            <div class="loading-steps">
+                <span class="step-badge active">1. CLAHE Preprocessing</span>
+                <span class="step-badge active">2. U-Net++ Pleural Delineation</span>
+                <span class="step-badge active">3. YOLO11m Multi-Lesion</span>
+            </div>
+            <div class="loading-details">Consolidating Single Cardiac Silhouette & RadLex Triage...</div>
         </div>
     </div>
 
