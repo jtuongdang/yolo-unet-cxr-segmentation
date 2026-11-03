@@ -50,7 +50,7 @@ def calculate_pleural_collapse(ptx_mask: np.ndarray) -> Dict[str, Any]:
             "collapse_percentage": 0.0,
             "ptx_pixels": 0,
             "severity": "None",
-            "intervention_recommended": "Routine Observation"
+            "extent_description": "Normal pleural surface"
         }
         
     estimated_lung_pixels = total_pixels * 0.20
@@ -58,20 +58,20 @@ def calculate_pleural_collapse(ptx_mask: np.ndarray) -> Dict[str, Any]:
     fraction_rounded = round(float(fraction), 1)
     
     if fraction_rounded >= 20.0:
-        severity = "Large / Tension Risk (>20%)"
-        intervention = "Urgent Tube Thoracostomy / Chest Drain"
+        severity = "Large Pneumothorax (>= 20%)"
+        extent_description = "Extensive hemithoracic volume"
     elif fraction_rounded >= 10.0:
         severity = "Moderate Pneumothorax (10-20%)"
-        intervention = "Immediate Specialist Evaluation / Needle Aspiration"
+        extent_description = "Moderate hemithoracic volume"
     else:
-        severity = "Small / Apical Pneumothorax (<10%)"
-        intervention = "Conservative High-Flow O2 & Close Monitoring"
+        severity = "Small / Apical Pneumothorax (< 10%)"
+        extent_description = "Minimal apical/lateral rim"
         
     return {
         "collapse_percentage": fraction_rounded,
         "ptx_pixels": ptx_pixels,
         "severity": severity,
-        "intervention_recommended": intervention
+        "extent_description": extent_description
     }
 
 def determine_lung_zone(box: List[float], img_h: int) -> str:
@@ -103,7 +103,7 @@ def determine_triage_alert(ptx_stats: Dict[str, Any], yolo_detections: List[Dict
         return {
             "level": "EMERGENCY",
             "badge_class": "badge-danger",
-            "summary": "Urgent Thoracic Intervention: Significant Visceral Pleural Collapse."
+            "summary": "Critical Finding: Significant Visceral Pleural Collapse Delineated."
         }
     elif has_ptx or has_cardiomegaly or has_lesions:
         findings_summary = []
@@ -119,11 +119,11 @@ def determine_triage_alert(ptx_stats: Dict[str, Any], yolo_detections: List[Dict
         return {
             "level": "PRIORITY",
             "badge_class": "badge-warning",
-            "summary": f"Abnormal Findings Requiring Radiologist Review: {', '.join(findings_summary)}."
+            "summary": f"Focal Radiographic Abnormalities: {', '.join(findings_summary)}."
         }
     else:
         return {
             "level": "ROUTINE",
             "badge_class": "badge-success",
-            "summary": "No Significant Acute Findings Detected (Normal Variant / Clean Thorax)."
+            "summary": "No Significant Focal Lesions or Pleural Detachment Detected."
         }
